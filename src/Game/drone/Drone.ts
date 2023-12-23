@@ -9,6 +9,7 @@ export class Drone {
   scans: FishId[]; // fishes scanned but not saved
   blips: RadarBlip[];
   lastBlips: RadarBlip[];
+  checkPoints: {pos: Vector, unseen: number}[];
 
   constructor(id: DroneId, pos: Vector, dead: number, battery: number) {
     this.droneId = id;
@@ -19,6 +20,7 @@ export class Drone {
     this.scans = [];
     this.blips = [];
     this.lastBlips = [];
+    this.checkPoints = [];
   }
 
   update(pos: Vector, dead: number, battery: number) {

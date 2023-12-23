@@ -1,9 +1,17 @@
-import { Direction, FishId, DroneId } from "./Game.types";
+import { MAP_SIZE } from "./Game.constants";
+import { Direction, FishId, DroneId, GameData, Vector } from "./Game.types";
 import { Drone } from "./drone/Drone";
 import { Fish, VisibleFish } from "./fish/Fish";
 
-export class Game {
-  mapSize: number = 10000;
+export class Game implements GameData {
+  checkPoints: Record<DroneId, {pos: Vector, unseen: number}[]> = {
+    0: [{pos: {x: 1560, y: 3750}, unseen: 1}, {pos: {x: 1560, y: 6250}, unseen: 1},
+    {pos: {x: 1560, y: 8750}, unseen: 1}, {pos: {x: 4560, y: 8750}, unseen: 1}, {pos: {x: 7560, y: 8750}, unseen: 1}, {pos: {x: 9560, y: 8750}, unseen: 1},
+    {pos: {x: 9560, y: 1000}, unseen: 1},],
+    1: [{pos: {x: 6560, y: 3750}, unseen: 1}, {pos: {x: 3560, y: 3750}, unseen: 1}, {pos: {x: 3560, y: 6250}, unseen: 1}, {pos: {x: 4560, y: 6250}, unseen: 1}, {pos: {x: 7560, y: 6250}, unseen: 1},]
+  }
+
+  mapSize: number = MAP_SIZE;
   weightedMap: Uint8ClampedArray = new Uint8ClampedArray(
     (this.mapSize * this.mapSize) / 100
   ); // contains probability of finding a fish
@@ -58,6 +66,7 @@ export class Game {
           dead,
           battery
         );
+        this.drones[droneId].checkPoints = this.checkPoints[i]
       }
       const foeDroneCount = parseInt(readline());
       for (let i = 0; i < foeDroneCount; i++) {
@@ -96,10 +105,6 @@ export class Game {
     }
   }
 
-  // private estimateScore(): number {
-  //     // Calculate score to know if saving scanned fished makes me win
-  // }
-
   playTurn(): void {
     this.newTurn();
 
@@ -130,21 +135,27 @@ export class Game {
 
     // Implement the strategy for each turn
     // Example: Move drone, scan creatures, update scores
-    for (const drone of this.myDrones) {
-      // const x = drone.pos.x
-      // const y = drone.pos.y
+    for (const droneId of this.myDrones) {
+      let nextCheckPoint = this.drones[droneId].checkPoints.find((value) => {return value.unseen})
+      const light = this.turn % 6 - 5 === 0 ? 1 : 0;
 
-      // Compute distance from fishes
-      // for (const fish of visibleFishes) {
-      //   fish.dist = Math.pow(x - fish.pos.x, 2) + Math.pow(y - fish.pos.y, 2)
-      // }
+      const dist = Math.hypot(
+        nextCheckPoint?.pos.x! - this.drones[droneId].pos.x,
+        nextCheckPoint?.pos.y! - this.drones[droneId].pos.y
+      )
 
-      // Sort by closest fish
-      // visibleFishes.sort((a, b) => {return a.dist - bchange type of variable
-      // const target: Fish | undefined = getTarget()
-      // const light = Math.sqrt(target?.dist!) <= 2000 ? 1 : 0
-
-      console.log(`MOVE ${5000} ${5000} ${1}`);
+      if (!nextCheckPoint) {
+        if (this.drones[droneId].pos.y < 500) {
+          this.drones[droneId].checkPoints.reverse()
+          this.drones[droneId].checkPoints.forEach((checkpoint) => {checkpoint.unseen = 1})
+        }
+        console.log(`MOVE ${this.drones[droneId].pos.x} ${0} ${light}`);
+      } else {
+        if (dist < 1000) {
+          nextCheckPoint.unseen = 0
+        }
+        console.log(`MOVE ${nextCheckPoint?.pos.x} ${nextCheckPoint?.pos.y} ${light}`)
+      }
     }
   }
 

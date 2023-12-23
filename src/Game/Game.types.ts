@@ -1,3 +1,6 @@
+import { Drone } from "./drone/Drone";
+import { Fish } from "./fish/Fish";
+
 export interface Vector {
   x: number;
   y: number;
@@ -24,4 +27,20 @@ export interface Creature {
 export interface RadarBlip {
   fishId: FishId;
   dir: Direction;
+}
+
+export interface GameData {
+  mapSize: number;
+  weightedMap: Uint8ClampedArray; // contains probability of finding a fish
+  fishes: Record<FishId, Fish>;
+  drones: Record<DroneId, Drone>;
+  turn: number;
+
+  // To update each turn
+  myScore: number;
+  foeScore: number;
+  myScans: FishId[]; // saved scans
+  foeScans: FishId[]; // saved scans
+  myDrones: Set<DroneId>;
+  foeDrones: Set<DroneId>;
 }
