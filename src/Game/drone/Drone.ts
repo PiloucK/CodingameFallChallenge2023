@@ -9,7 +9,7 @@ export class Drone {
   scans: FishId[]; // fishes scanned but not saved
   blips: RadarBlip[];
   lastBlips: RadarBlip[];
-  checkPoints: {pos: Vector, unseen: number}[];
+  checkPoints: { pos: Vector; unseen: number }[];
   light: number;
 
   constructor(id: DroneId, pos: Vector, dead: number, battery: number) {
@@ -35,27 +35,38 @@ export class Drone {
   }
 
   move() {
-    let nextCheckPoint = this.checkPoints.find((value) => {return value.unseen})
-      const light = this.pos.y < 2000 ? 0
-        : this.light !== 0 ? 0
-        : 1
+    let nextCheckPoint = this.checkPoints.find((value) => {
+      return value.unseen;
+    });
+    this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
 
-      const dist = Math.hypot(
-        nextCheckPoint?.pos.x! - this.pos.x,
-        nextCheckPoint?.pos.y! - this.pos.y
-      )
-
-      if (!nextCheckPoint) {
-        if (this.pos.y < 500) {
-          this.checkPoints.reverse()
-          this.checkPoints.forEach((checkpoint) => {checkpoint.unseen = 1})
-        }
-        console.log(`MOVE ${this.pos.x} ${0} ${light}`);
+    if (!nextCheckPoint) {
+      if (this.pos.y < 500) {
+        this.checkPoints.reverse();
+        this.checkPoints.forEach((checkpoint) => {
+          checkpoint.unseen = 1;
+        });
+        this.move(); // go to the next checkpoint if the scans got saved
       } else {
-        if (dist < 1000) {
-          nextCheckPoint.unseen = 0
-        }
-        console.log(`MOVE ${nextCheckPoint?.pos.x} ${nextCheckPoint?.pos.y} ${light}`)
+        console.log(`MOVE ${this.pos.x} ${0} ${this.light}`);
       }
+    } else {
+      const distToCheckpoint = Math.hypot(
+        nextCheckPoint.pos.x - this.pos.x,
+        nextCheckPoint.pos.y - this.pos.y
+      );
+
+      const speed: Vector = {
+        x: Math.floor(((nextCheckPoint.pos.x - this.pos.x) * 600) / distToCheckpoint),
+        y: Math.floor(((nextCheckPoint.pos.y - this.pos.y) * 600) / distToCheckpoint),
+      };
+
+      if (distToCheckpoint < 1000) {
+        nextCheckPoint.unseen = 0;
+      }
+      console.log(
+        `MOVE ${this.pos.x + speed.x} ${this.pos.y + speed.y} ${this.light}`
+      );
+    }
   }
 }
