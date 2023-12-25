@@ -9,6 +9,21 @@ function angleFromPos(dest: Vector, pos: Vector): number {
   return angle;
 }
 
+function closestToTarget(target: Vector, moves: Vector[]): Vector {
+  let closestDist = Math.hypot(target.x - moves[0].x, target.y - moves[0].y);
+  let closest = moves[0];
+
+  moves.forEach((move) => {
+    const dist = Math.hypot(target.x - move.x, target.y - move.y);
+
+    if (dist < closestDist) {
+      closest = move;
+    }
+  });
+
+  return closest;
+}
+
 export function computeBestNextPos(
   drone: Drone,
   fishes: Record<FishId, Fish>,
@@ -91,6 +106,6 @@ export function computeBestNextPos(
     safePositions.push(initialGuess);
   }
 
-  console.error({safePositions})
-  return safePositions[0];
+  console.error({ safePositions });
+  return closestToTarget(target, safePositions);
 }
