@@ -36,7 +36,9 @@ export class Drone {
 
   move() {
     let nextCheckPoint = this.checkPoints.find((value) => {return value.unseen})
-      const light = this.pos.y > 2000 ? !this.light : 0;
+      const light = this.pos.y < 2000 ? 0
+        : this.light !== 0 ? 0
+        : 1
 
       const dist = Math.hypot(
         nextCheckPoint?.pos.x! - this.pos.x,
