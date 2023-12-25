@@ -107,6 +107,7 @@ export class Game implements GameData {
 
   playTurn(): void {
     this.newTurn();
+    console.error(this.turn)
 
     const visibleFishes: VisibleFish[] = [];
 
@@ -120,9 +121,13 @@ export class Game implements GameData {
           this.fishes[fishId],
           { x: fishX, y: fishY },
           { x: fishVx, y: fishVy },
-          this.turn
         )
       );
+
+      this.fishes[fishId].guesstimatedPos = { x: fishX, y: fishY }
+      this.fishes[fishId].guesstimatedSpeed = { x: fishVx, y: fishVy }
+      this.fishes[fishId].lastSeenTurn = this.turn
+      this.fishes[fishId].zone = Math.floor(fishY / 2500)
     }
 
     const myRadarBlipCount = parseInt(readline());
@@ -139,6 +144,8 @@ export class Game implements GameData {
     //   this.estimateMonsterPos()
       this.drones[droneId].move({fishes: this.fishes})
     }
+
+    this.endTurn()
   }
 
   // move monster
@@ -151,5 +158,15 @@ export class Game implements GameData {
     }
   }
 
+  // make fishes guesstimatedPos = gesstimatedNextPos 
+  // if they are visible on the next turn it will be overwritten
+  endTurn() {
+    for (const fishId in this.fishes) {
+        let fish = this.fishes[fishId]
+
+        if (fish.detail.type ===  -1) {
+            fish.saveGuesstimates(this.turn)
+        }
+    }
   }
 }

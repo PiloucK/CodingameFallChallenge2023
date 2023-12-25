@@ -19,8 +19,10 @@ export interface FishDetail {
 export interface Creature {
   id: FishId;
   lastSeenTurn?: number;
-  guesstimatePos?: Vector;
-  guesstimateSpeed?: Vector;
+  guesstimatedPos?: Vector;
+  guesstimatedSpeed?: Vector;
+  guesstimatedNextPos?: Vector;
+  guesstimatedNextSpeed?: Vector;
   detail: FishDetail;
 }
 
