@@ -133,13 +133,23 @@ export class Game implements GameData {
       this.drones[droneId].blips.push({ fishId, dir: dir as Direction });
     }
 
-    // Implement the strategy for each turn
-    // Example: Move drone, scan creatures, update scores
+    this.updateMonsterPos()
+
     for (const droneId of this.myDrones) {
     //   this.estimateMonsterPos()
-      this.drones[droneId].move()
+      this.drones[droneId].move({fishes: this.fishes})
     }
   }
 
-  // Additional methods as needed, e.g., for pathfinding, decision-making
+  // move monster
+  // TODO: take into account potential monster collisions and foe chasing
+  updateMonsterPos() {
+    for (const fishId in this.fishes) {
+        if (this.fishes[fishId].detail.type === -1) {
+            this.fishes[fishId].move()
+        }
+    }
+  }
+
+  }
 }

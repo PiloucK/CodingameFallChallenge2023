@@ -1,4 +1,4 @@
-import { DroneId, FishId, RadarBlip, Vector } from "../Game.types";
+import { DroneId, FishId, GameData, RadarBlip, Vector } from "../Game.types";
 
 export class Drone {
   droneId: DroneId;
@@ -34,7 +34,7 @@ export class Drone {
     this.blips = [];
   }
 
-  move() {
+  move(fishes: Pick<GameData, 'fishes'>) {
     let nextCheckPoint = this.checkPoints.find((value) => {
       return value.unseen;
     });
@@ -46,7 +46,7 @@ export class Drone {
         this.checkPoints.forEach((checkpoint) => {
           checkpoint.unseen = 1;
         });
-        this.move(); // go to the next checkpoint if the scans got saved
+        this.move(fishes); // go to the next checkpoint if the scans got saved
       } else {
         console.log(`MOVE ${this.pos.x} ${0} ${this.light}`);
       }
