@@ -142,7 +142,7 @@ export class Game implements GameData {
 
     for (const droneId of this.myDrones) {
     //   this.estimateMonsterPos()
-      this.drones[droneId].move({fishes: this.fishes})
+      this.drones[droneId].move(this.fishes)
     }
 
     this.endTurn()

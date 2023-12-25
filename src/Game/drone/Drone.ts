@@ -1,4 +1,6 @@
-import { DroneId, FishId, GameData, RadarBlip, Vector } from "../Game.types";
+import { DroneId, FishId, RadarBlip, Vector } from "../Game.types";
+import { Fish } from "../fish/Fish";
+import { computeBestNextPos } from "../pathing";
 
 export class Drone {
   droneId: DroneId;
@@ -34,7 +36,12 @@ export class Drone {
     this.blips = [];
   }
 
-  move(fishes: Pick<GameData, 'fishes'>) {
+  move(fishes: Record<FishId, Fish>) {
+    if (this.dead) {
+        console.log('WAIT 1')
+        return
+    }
+
     let nextCheckPoint = this.checkPoints.find((value) => {
       return value.unseen;
     });
@@ -48,24 +55,33 @@ export class Drone {
         });
         this.move(fishes); // go to the next checkpoint if the scans got saved
       } else {
-        console.log(`MOVE ${this.pos.x} ${0} ${this.light}`);
+        const nextPos: Vector = computeBestNextPos(
+          this,
+          fishes,
+          {x: this.pos.x, y: 0}
+        );
+        console.log(`MOVE ${nextPos.x} ${nextPos.y} ${this.light}`);
       }
     } else {
-      const distToCheckpoint = Math.hypot(
-        nextCheckPoint.pos.x - this.pos.x,
-        nextCheckPoint.pos.y - this.pos.y
+      const nextPos: Vector = computeBestNextPos(
+        this,
+        fishes,
+        nextCheckPoint.pos
       );
 
-      const speed: Vector = {
-        x: Math.floor(((nextCheckPoint.pos.x - this.pos.x) * 600) / distToCheckpoint),
-        y: Math.floor(((nextCheckPoint.pos.y - this.pos.y) * 600) / distToCheckpoint),
-      };
-
-      if (distToCheckpoint < 1000) {
+      // if after mooving i'm closer than 400 from the checkpoint, I consider it visited
+      // it allows me to always move from at least 400
+      if (
+        Math.hypot(
+          nextCheckPoint.pos.x - nextPos.x,
+          nextCheckPoint.pos.y - nextPos.y
+        ) < 400
+      ) {
         nextCheckPoint.unseen = 0;
       }
+
       console.log(
-        `MOVE ${this.pos.x + speed.x} ${this.pos.y + speed.y} ${this.light}`
+        `MOVE ${nextPos.x} ${nextPos.y} ${this.light}`
       );
     }
   }
