@@ -136,26 +136,8 @@ export class Game implements GameData {
     // Implement the strategy for each turn
     // Example: Move drone, scan creatures, update scores
     for (const droneId of this.myDrones) {
-      let nextCheckPoint = this.drones[droneId].checkPoints.find((value) => {return value.unseen})
-      const light = this.turn % 6 - 5 === 0 ? 1 : 0;
-
-      const dist = Math.hypot(
-        nextCheckPoint?.pos.x! - this.drones[droneId].pos.x,
-        nextCheckPoint?.pos.y! - this.drones[droneId].pos.y
-      )
-
-      if (!nextCheckPoint) {
-        if (this.drones[droneId].pos.y < 500) {
-          this.drones[droneId].checkPoints.reverse()
-          this.drones[droneId].checkPoints.forEach((checkpoint) => {checkpoint.unseen = 1})
-        }
-        console.log(`MOVE ${this.drones[droneId].pos.x} ${0} ${light}`);
-      } else {
-        if (dist < 1000) {
-          nextCheckPoint.unseen = 0
-        }
-        console.log(`MOVE ${nextCheckPoint?.pos.x} ${nextCheckPoint?.pos.y} ${light}`)
-      }
+    //   this.estimateMonsterPos()
+      this.drones[droneId].move()
     }
   }
 

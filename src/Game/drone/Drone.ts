@@ -10,6 +10,7 @@ export class Drone {
   blips: RadarBlip[];
   lastBlips: RadarBlip[];
   checkPoints: {pos: Vector, unseen: number}[];
+  light: number;
 
   constructor(id: DroneId, pos: Vector, dead: number, battery: number) {
     this.droneId = id;
@@ -21,6 +22,7 @@ export class Drone {
     this.blips = [];
     this.lastBlips = [];
     this.checkPoints = [];
+    this.light = 0;
   }
 
   update(pos: Vector, dead: number, battery: number) {
@@ -30,5 +32,28 @@ export class Drone {
     this.battery = battery;
     this.lastBlips = this.blips;
     this.blips = [];
+  }
+
+  move() {
+    let nextCheckPoint = this.checkPoints.find((value) => {return value.unseen})
+      const light = this.pos.y > 2000 ? !this.light : 0;
+
+      const dist = Math.hypot(
+        nextCheckPoint?.pos.x! - this.pos.x,
+        nextCheckPoint?.pos.y! - this.pos.y
+      )
+
+      if (!nextCheckPoint) {
+        if (this.pos.y < 500) {
+          this.checkPoints.reverse()
+          this.checkPoints.forEach((checkpoint) => {checkpoint.unseen = 1})
+        }
+        console.log(`MOVE ${this.pos.x} ${0} ${light}`);
+      } else {
+        if (dist < 1000) {
+          nextCheckPoint.unseen = 0
+        }
+        console.log(`MOVE ${nextCheckPoint?.pos.x} ${nextCheckPoint?.pos.y} ${light}`)
+      }
   }
 }
