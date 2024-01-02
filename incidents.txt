@@ -1,0 +1,7 @@
+2 pathing problems:
+- getting stuck with no move between 2 monsters
+- getting eaten by monster near surface
+seed=6326023356475289000
+
+super seed for checkPoints choosing testing
+seed=-6880353946467306000
