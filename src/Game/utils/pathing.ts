@@ -67,6 +67,11 @@ function circleIntersections(
     droneMovement.center.x - safetyLimit.center.x,
     droneMovement.center.y - safetyLimit.center.y
   );
+
+  if (distBetweenCenters < Math.abs(droneMovement.radius - safetyLimit.radius)) {
+    // console.error()
+    return (circleIntersections(droneMovement, {center: safetyLimit.center, radius: safetyLimit.radius - 1}))
+  }
   const distanceToLineOfIntersection =
     (Math.pow(droneMovement.radius, 2) -
       Math.pow(safetyLimit.radius, 2) +
@@ -154,7 +159,7 @@ function rotateSafePos(
 
   let i = 0,
   clockwise = false;
-  while (angles[i].position.x !== positionToRotate.x && angles[i].position.y !== positionToRotate.y) {
+  while (angles[i].position.x !== positionToRotate.x || angles[i].position.y !== positionToRotate.y) {
     console.error(i, positionToRotate, angles[i].position)
 
     // if I see the other safe position, it mean this position is the first clockwise

@@ -96,7 +96,7 @@ export class Game implements GameData {
         );
         // console.error('____', this.drones[droneId], this.checkPoints)
         // this.drones[droneId].checkPoints = this.checkPoints[droneId];
-        this.drones[droneId].updateCheckpoints
+        this.drones[droneId].updateCheckpoints()
       }
       const foeDroneCount = parseInt(readline());
       for (let i = 0; i < foeDroneCount; i++) {
