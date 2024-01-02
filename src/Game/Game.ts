@@ -135,8 +135,8 @@ export class Game implements GameData {
       const boxYPosRefComparison =
         leftMostDrone.pos.y > rightMostDrone.pos.y &&
         leftBlip.blipDir.height === rightBlip.blipDir.height
-          ? Math.max
-          : Math.min;
+          ? Math.min
+          : Math.max;
       const boxSizeYDirRef =
         leftMostDrone.pos.y > rightMostDrone.pos.y ||
         leftBlip.blipDir.height === rightBlip.blipDir.height
