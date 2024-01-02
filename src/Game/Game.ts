@@ -4,40 +4,40 @@ import { Drone } from "./drone/Drone";
 import { Fish, VisibleFish } from "./fish/Fish";
 
 export class Game implements GameData {
-  checkPoints: Record<DroneId, { pos: Vector; unseen: number }[]> = {
-    0: [
-      { pos: { x: 1560, y: 3750 }, unseen: 1 },
-      { pos: { x: 1560, y: 6250 }, unseen: 1 },
-      { pos: { x: 1560, y: 9000 }, unseen: 1 },
-      { pos: { x: 4560, y: 9000 }, unseen: 1 },
-      { pos: { x: 7560, y: 9000 }, unseen: 1 },
-      { pos: { x: 9560, y: 9000 }, unseen: 1 },
-      { pos: { x: 9560, y: 1000 }, unseen: 1 },
-    ],
-    2: [
-      { pos: { x: 7560, y: 6250 }, unseen: 1 },
-      { pos: { x: 4560, y: 6250 }, unseen: 1 },
-      { pos: { x: 3560, y: 6250 }, unseen: 1 },
-      { pos: { x: 3560, y: 3750 }, unseen: 1 },
-      { pos: { x: 6560, y: 3750 }, unseen: 1 },
-    ],
-    1: [
-      { pos: { x: 2440, y: 6250 }, unseen: 1 },
-      { pos: { x: 5440, y: 6250 }, unseen: 1 },
-      { pos: { x: 6440, y: 6250 }, unseen: 1 },
-      { pos: { x: 6440, y: 3750 }, unseen: 1 },
-      { pos: { x: 3440, y: 3750 }, unseen: 1 },
-    ],
-    3: [
-      { pos: { x: 8440, y: 3750 }, unseen: 1 },
-      { pos: { x: 8440, y: 6250 }, unseen: 1 },
-      { pos: { x: 8440, y: 9000 }, unseen: 1 },
-      { pos: { x: 5440, y: 9000 }, unseen: 1 },
-      { pos: { x: 2440, y: 9000 }, unseen: 1 },
-      { pos: { x: 440, y: 9000 }, unseen: 1 },
-      { pos: { x: 440, y: 1000 }, unseen: 1 },
-    ],
-  };
+  // checkPoints: Record<DroneId, { pos: Vector; unseen: number }[]> = {
+  //   0: [
+  //     { pos: { x: 1560, y: 3750 }, unseen: 1 },
+  //     { pos: { x: 1560, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 1560, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 4560, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 7560, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 9560, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 9560, y: 1000 }, unseen: 1 },
+  //   ],
+  //   2: [
+  //     { pos: { x: 7560, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 4560, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 3560, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 3560, y: 3750 }, unseen: 1 },
+  //     { pos: { x: 6560, y: 3750 }, unseen: 1 },
+  //   ],
+  //   1: [
+  //     { pos: { x: 2440, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 5440, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 6440, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 6440, y: 3750 }, unseen: 1 },
+  //     { pos: { x: 3440, y: 3750 }, unseen: 1 },
+  //   ],
+  //   3: [
+  //     { pos: { x: 8440, y: 3750 }, unseen: 1 },
+  //     { pos: { x: 8440, y: 6250 }, unseen: 1 },
+  //     { pos: { x: 8440, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 5440, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 2440, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 440, y: 9000 }, unseen: 1 },
+  //     { pos: { x: 440, y: 1000 }, unseen: 1 },
+  //   ],
+  // };
 
   mapSize: number = MAP_SIZE;
   weightedMap: Uint8ClampedArray = new Uint8ClampedArray(
@@ -95,7 +95,8 @@ export class Game implements GameData {
           battery
         );
         // console.error('____', this.drones[droneId], this.checkPoints)
-        this.drones[droneId].checkPoints = this.checkPoints[droneId];
+        // this.drones[droneId].checkPoints = this.checkPoints[droneId];
+        this.drones[droneId].updateCheckpoints
       }
       const foeDroneCount = parseInt(readline());
       for (let i = 0; i < foeDroneCount; i++) {

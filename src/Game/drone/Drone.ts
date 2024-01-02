@@ -87,4 +87,17 @@ export class Drone {
       );
     }
   }
+
+  updateCheckpoints() {
+    if (this.checkPoints.length === 0) {
+      if (this.droneId === 0 || this.droneId === 1) {
+        this.checkPoints.push({ pos: { x: this.pos.x, y: 8500 }, unseen: 1 });
+      } else {
+        this.checkPoints.push({
+          pos: { x: this.pos.x < 5000 ? 2300 : 7700, y: 8500 },
+          unseen: 1,
+        });
+      }
+    }
+  }
 }
