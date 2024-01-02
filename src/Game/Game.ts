@@ -196,9 +196,9 @@ export class Game implements GameData {
       }
     }
 
-    for (const fish of Object.values(this.fishes)) {
-      console.error({ id: fish.id, box: fish.box });
-    }
+    // for (const fish of Object.values(this.fishes)) {
+    //   console.error({ id: fish.id, box: fish.box });
+    // }
   }
 
   updateDroneCheckpoints() {
@@ -238,12 +238,14 @@ export class Game implements GameData {
       let closestBoxCenter: Checkpoint | undefined = undefined;
       let shortestDist: number = Infinity;
       for (const fish of Object.values(this.fishes)) {
-        if (fish.lastBlipTurn !== this.turn) {
+        if (fish.detail.type === -1) {
+          continue
+        } else if (fish.lastBlipTurn !== this.turn) {
           continue;
         } else if (this.myScans.includes(fish.id)) {
           continue;
-        } else if (drone.scans.includes(fish.id)) {
-          continue
+        } else if (drone.scans.includes(fish.id) || otherDrone?.scans.includes(fish.id)) {
+          continue;
         }
 
         const boxCenter = {
@@ -252,17 +254,24 @@ export class Game implements GameData {
         };
         const distToDrone =
           Math.pow(boxCenter.x - drone.pos.x, 2) +
-          Math.pow(boxCenter.y - drone.pos.y, 2)
+          Math.pow(boxCenter.y - drone.pos.y, 2);
 
         if (distToDrone < shortestDist) {
           shortestDist = distToDrone;
-          closestBoxCenter = { pos: { x: boxCenter.x, y: boxCenter.y }, unseen: 1 };
+          closestBoxCenter = {
+            pos: { x: boxCenter.x, y: boxCenter.y },
+            unseen: 1,
+          };
         }
       }
 
       if (closestBoxCenter) {
-        drone.checkPoints = [closestBoxCenter]
+        drone.checkPoints = [closestBoxCenter];
+      } else {
+        drone.checkPoints = [{ pos: { x: drone.pos.x, y: 0 }, unseen: 1 }];
       }
+
+      console.error({droneId: drone.droneId}, drone.checkPoints)
     }
   }
 
