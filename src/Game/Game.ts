@@ -4,12 +4,40 @@ import { Drone } from "./drone/Drone";
 import { Fish, VisibleFish } from "./fish/Fish";
 
 export class Game implements GameData {
-  checkPoints: Record<DroneId, {pos: Vector, unseen: number}[]> = {
-    0: [{pos: {x: 1560, y: 3750}, unseen: 1}, {pos: {x: 1560, y: 6250}, unseen: 1},
-    {pos: {x: 1560, y: 8750}, unseen: 1}, {pos: {x: 4560, y: 8750}, unseen: 1}, {pos: {x: 7560, y: 8750}, unseen: 1}, {pos: {x: 9560, y: 8750}, unseen: 1},
-    {pos: {x: 9560, y: 1000}, unseen: 1},],
-    1: [{pos: {x: 6560, y: 3750}, unseen: 1}, {pos: {x: 3560, y: 3750}, unseen: 1}, {pos: {x: 3560, y: 6250}, unseen: 1}, {pos: {x: 4560, y: 6250}, unseen: 1}, {pos: {x: 7560, y: 6250}, unseen: 1},]
-  }
+  checkPoints: Record<DroneId, { pos: Vector; unseen: number }[]> = {
+    0: [
+      { pos: { x: 1560, y: 3750 }, unseen: 1 },
+      { pos: { x: 1560, y: 6250 }, unseen: 1 },
+      { pos: { x: 1560, y: 9000 }, unseen: 1 },
+      { pos: { x: 4560, y: 9000 }, unseen: 1 },
+      { pos: { x: 7560, y: 9000 }, unseen: 1 },
+      { pos: { x: 9560, y: 9000 }, unseen: 1 },
+      { pos: { x: 9560, y: 1000 }, unseen: 1 },
+    ],
+    2: [
+      { pos: { x: 7560, y: 6250 }, unseen: 1 },
+      { pos: { x: 4560, y: 6250 }, unseen: 1 },
+      { pos: { x: 3560, y: 6250 }, unseen: 1 },
+      { pos: { x: 3560, y: 3750 }, unseen: 1 },
+      { pos: { x: 6560, y: 3750 }, unseen: 1 },
+    ],
+    1: [
+      { pos: { x: 2440, y: 6250 }, unseen: 1 },
+      { pos: { x: 5440, y: 6250 }, unseen: 1 },
+      { pos: { x: 6440, y: 6250 }, unseen: 1 },
+      { pos: { x: 6440, y: 3750 }, unseen: 1 },
+      { pos: { x: 3440, y: 3750 }, unseen: 1 },
+    ],
+    3: [
+      { pos: { x: 8440, y: 3750 }, unseen: 1 },
+      { pos: { x: 8440, y: 6250 }, unseen: 1 },
+      { pos: { x: 8440, y: 9000 }, unseen: 1 },
+      { pos: { x: 5440, y: 9000 }, unseen: 1 },
+      { pos: { x: 2440, y: 9000 }, unseen: 1 },
+      { pos: { x: 440, y: 9000 }, unseen: 1 },
+      { pos: { x: 440, y: 1000 }, unseen: 1 },
+    ],
+  };
 
   mapSize: number = MAP_SIZE;
   weightedMap: Uint8ClampedArray = new Uint8ClampedArray(
@@ -66,7 +94,8 @@ export class Game implements GameData {
           dead,
           battery
         );
-        this.drones[droneId].checkPoints = this.checkPoints[i]
+        // console.error('____', this.drones[droneId], this.checkPoints)
+        this.drones[droneId].checkPoints = this.checkPoints[droneId];
       }
       const foeDroneCount = parseInt(readline());
       for (let i = 0; i < foeDroneCount; i++) {
@@ -107,7 +136,7 @@ export class Game implements GameData {
 
   playTurn(): void {
     this.newTurn();
-    console.error(this.turn)
+    console.error(this.turn);
 
     const visibleFishes: VisibleFish[] = [];
 
@@ -120,14 +149,13 @@ export class Game implements GameData {
         new VisibleFish(
           this.fishes[fishId],
           { x: fishX, y: fishY },
-          { x: fishVx, y: fishVy },
+          { x: fishVx, y: fishVy }
         )
       );
 
-      this.fishes[fishId].guesstimatedPos = { x: fishX, y: fishY }
-      this.fishes[fishId].guesstimatedSpeed = { x: fishVx, y: fishVy }
-      this.fishes[fishId].lastSeenTurn = this.turn
-      this.fishes[fishId].zone = Math.floor(fishY / 2500)
+      this.fishes[fishId].guesstimatedPos = { x: fishX, y: fishY };
+      this.fishes[fishId].guesstimatedSpeed = { x: fishVx, y: fishVy };
+      this.fishes[fishId].lastSeenTurn = this.turn;
     }
 
     const myRadarBlipCount = parseInt(readline());
@@ -138,35 +166,23 @@ export class Game implements GameData {
       this.drones[droneId].blips.push({ fishId, dir: dir as Direction });
     }
 
-    this.updateMonsterPos()
-
     for (const droneId of this.myDrones) {
-    //   this.estimateMonsterPos()
-      this.drones[droneId].move(this.fishes)
+      this.drones[droneId].move(this.fishes);
     }
 
-    this.endTurn()
+    this.endTurn();
   }
 
-  // move monster
-  // TODO: take into account potential monster collisions and foe chasing
-  updateMonsterPos() {
-    for (const fishId in this.fishes) {
-        if (this.fishes[fishId].detail.type === -1) {
-            this.fishes[fishId].move()
-        }
-    }
-  }
-
-  // make fishes guesstimatedPos = gesstimatedNextPos 
+  // make fishes guesstimatedPos = gesstimatedNextPos
   // if they are visible on the next turn it will be overwritten
   endTurn() {
     for (const fishId in this.fishes) {
-        let fish = this.fishes[fishId]
+      let fish = this.fishes[fishId];
 
-        if (fish.detail.type ===  -1) {
-            fish.saveGuesstimates(this.turn)
-        }
+      if (fish.detail.type === -1) {
+        fish.guesstimateMove();
+        fish.move(this.turn);
+      }
     }
   }
 }

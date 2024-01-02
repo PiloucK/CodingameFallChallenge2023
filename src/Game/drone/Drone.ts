@@ -45,6 +45,8 @@ export class Drone {
     let nextCheckPoint = this.checkPoints.find((value) => {
       return value.unseen;
     });
+
+    // TODO: better light decision
     this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
 
     if (!nextCheckPoint) {
@@ -60,7 +62,7 @@ export class Drone {
           fishes,
           {x: this.pos.x, y: 0}
         );
-        console.log(`MOVE ${nextPos.x} ${nextPos.y} ${this.light}`);
+        console.log(`MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`);
       }
     } else {
       const nextPos: Vector = computeBestNextPos(
@@ -81,7 +83,7 @@ export class Drone {
       }
 
       console.log(
-        `MOVE ${nextPos.x} ${nextPos.y} ${this.light}`
+        `MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`
       );
     }
   }
