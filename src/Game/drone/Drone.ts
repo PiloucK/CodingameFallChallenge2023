@@ -1,6 +1,6 @@
 import { DroneId, FishId, RadarBlip, Vector } from "../Game.types";
 import { Fish } from "../fish/Fish";
-import { computeBestNextPos } from "../pathing";
+import { computeBestNextPos } from "../utils/pathing";
 
 export class Drone {
   droneId: DroneId;

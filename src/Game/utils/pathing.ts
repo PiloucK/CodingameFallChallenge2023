@@ -2,10 +2,10 @@ import {
   DRONE_MAX_MOVE_DIST,
   STATIC_SAFETY_RADIUS,
   STEP_RATIO,
-} from "./Game.constants";
-import { FishId, Vector } from "./Game.types";
-import { Drone } from "./drone/Drone";
-import { Fish } from "./fish/Fish";
+} from "../Game.constants";
+import { FishId, Vector } from "../Game.types";
+import { Drone } from "../drone/Drone";
+import { Fish } from "../fish/Fish";
 
 function normalizedAngle(angle: number): number {
   if (angle < 0) angle += 2 * Math.PI; // Normalize angle to [0, 2π]
