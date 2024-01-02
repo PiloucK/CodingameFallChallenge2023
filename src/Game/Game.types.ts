@@ -6,7 +6,12 @@ export interface Vector {
   y: number;
 }
 
-export type Direction = "TL" | "TR" | "BL" | "BR";
+export type Checkpoint = { pos: Vector; unseen: number };
+
+export type Direction = {
+  height: -1 | 1; // Top or Bottom
+  side: -1 | 1; // Left or Right
+};
 
 export type FishId = number;
 export type DroneId = number;
@@ -28,7 +33,7 @@ export interface Creature {
 
 export interface RadarBlip {
   fishId: FishId;
-  dir: Direction;
+  blipDir: Direction;
 }
 
 export interface GameData {
@@ -43,6 +48,6 @@ export interface GameData {
   foeScore: number;
   myScans: FishId[]; // saved scans
   foeScans: FishId[]; // saved scans
-  myDrones: Set<DroneId>;
-  foeDrones: Set<DroneId>;
+  myDrones: DroneId[];
+  foeDrones: DroneId[];
 }
