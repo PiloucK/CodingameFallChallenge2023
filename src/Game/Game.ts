@@ -1,13 +1,19 @@
-import { MAP_SIZE } from "./Game.constants";
-import { FishId, DroneId, GameData, Checkpoint } from "./Game.types";
+import { FISH_HABITAT, MAP_SIZE } from "./Game.constants";
+import {
+  FishId,
+  DroneId,
+  GameData,
+  Checkpoint,
+  Vector,
+  Direction,
+} from "./Game.types";
 import { Drone } from "./drone/Drone";
 import { Fish, VisibleFish } from "./fish/Fish";
 import { boxBoundSize } from "./utils/boxing";
 
 export class Game implements GameData {
-  mapSize: number = MAP_SIZE;
   weightedMap: Uint8ClampedArray = new Uint8ClampedArray(
-    (this.mapSize * this.mapSize) / 100
+    (MAP_SIZE * MAP_SIZE) / 100
   ); // contains probability of finding a fish
   fishes: Record<FishId, Fish> = {};
   drones: Record<DroneId, Drone> = {};
@@ -110,95 +116,103 @@ export class Game implements GameData {
 
   // set boxes in which the fishes should be
   fishtimate() {
-    let leftMostDrone: Drone = this.drones[this.myDrones[0]];
-    let rightMostDrone: Drone = this.drones[this.myDrones[1]];
-
-    // switch drones if the left most drone is on the right
-    if (leftMostDrone.pos.x > rightMostDrone.pos.x) {
-      [leftMostDrone, rightMostDrone] = [rightMostDrone, leftMostDrone];
-    }
+    let firstDrone: Drone = this.drones[this.myDrones[0]];
+    let secondDrone: Drone = this.drones[this.myDrones[1]];
 
     // ensure number of blips is same between drones
     // boxes will be valid even if a drone doesn't receive blips
-    if (leftMostDrone.dead) {
-      leftMostDrone.pos = rightMostDrone.pos;
-      leftMostDrone.blips = rightMostDrone.blips;
+    if (firstDrone.dead) {
+      firstDrone.pos = secondDrone.pos;
+      firstDrone.blips = secondDrone.blips;
+    } else if (secondDrone.dead) {
+      secondDrone.pos = firstDrone.pos;
+      secondDrone.pos = firstDrone.pos;
     }
-    if (rightMostDrone.dead) {
-      rightMostDrone.pos = leftMostDrone.pos;
-      rightMostDrone.pos = leftMostDrone.pos;
-    }
 
-    for (let i = 0; i < leftMostDrone.blips.length; ++i) {
-      const leftBlip = leftMostDrone.blips[i];
-      const rightBlip = rightMostDrone.blips[i];
-      const boxYPosRefComparison =
-        leftMostDrone.pos.y > rightMostDrone.pos.y &&
-        leftBlip.blipDir.height === rightBlip.blipDir.height
-          ? Math.min
-          : Math.max;
-      const boxSizeYDirRef =
-        leftMostDrone.pos.y > rightMostDrone.pos.y ||
-        leftBlip.blipDir.height === rightBlip.blipDir.height
-          ? leftBlip
-          : rightBlip;
+    for (let i = 0; i < firstDrone.blips.length; ++i) {
+      const fish = this.fishes[firstDrone.blips[i].fishId];
 
-      const fish = this.fishes[leftBlip.fishId];
-
-      if (fish.lastSeenTurn === this.turn - 1) {
-        fish.box = {
-          pos: {
-            x: fish.guesstimatedPos?.x! + fish.guesstimatedSpeed?.x!,
-            y: fish.guesstimatedPos?.y! + fish.guesstimatedSpeed?.y!,
-          },
-          size: { x: 0, y: 0 },
-        };
-      } else if (fish.lastSeenTurn === this.turn) {
-        fish.box = {
-          pos: {
-            x: fish.guesstimatedPos?.x!,
-            y: fish.guesstimatedPos?.y!,
-          },
-          size: { x: 0, y: 0 },
-        };
-      } else if (fish.lastBlipTurn === this.turn) {
-        const boxStart = {
-          x: Math.abs(
-            Math.max(
-              leftMostDrone.pos.x * leftBlip.blipDir.side,
-              rightMostDrone.pos.x * rightBlip.blipDir.side
-            )
-          ),
-          y: Math.abs(
-            boxYPosRefComparison(
-              leftMostDrone.pos.y * leftBlip.blipDir.height,
-              rightMostDrone.pos.y * rightBlip.blipDir.height
-            )
-          ),
-        };
-        fish.box = {
-          pos: boxStart,
-          size: {
-            x: boxBoundSize(
-              [0, leftMostDrone.pos.x, rightMostDrone.pos.x, MAP_SIZE - 1],
-              boxStart.x,
-              leftBlip.blipDir.side,
-              this.useSymetry
-            ),
-            y: boxBoundSize(
-              [0, leftMostDrone.pos.y, rightMostDrone.pos.y, MAP_SIZE - 1],
-              boxStart.y,
-              boxSizeYDirRef.blipDir.height,
-              this.useSymetry
-            ),
-          },
-        };
+      // skip scanned and gone fishes
+      if (
+        fish.lastBlipTurn !== this.turn ||
+        fish.lastSeenTurn! >= this.turn - 1
+      ) {
+        continue;
       }
+
+      const topLeftBlip: { pos: Vector; dir: Direction } = {
+        pos: { x: firstDrone.pos.x, y: firstDrone.pos.y },
+        dir: {
+          x: firstDrone.blips[i].blipDir.x,
+          y: firstDrone.blips[i].blipDir.y,
+        },
+      };
+      const bottomRightBlip: { pos: Vector; dir: Direction } = {
+        pos: { x: secondDrone.pos.x, y: secondDrone.pos.y },
+        dir: {
+          x: secondDrone.blips[i].blipDir.x,
+          y: secondDrone.blips[i].blipDir.y,
+        },
+      };
+
+      if (firstDrone.pos.x > secondDrone.pos.x) {
+        [topLeftBlip.pos.x, bottomRightBlip.pos.x] = [
+          bottomRightBlip.pos.x,
+          topLeftBlip.pos.x,
+        ];
+      }
+      if (firstDrone.pos.y > secondDrone.pos.y) {
+        [topLeftBlip.pos.y, bottomRightBlip.pos.y] = [
+          bottomRightBlip.pos.y,
+          topLeftBlip.pos.y,
+        ];
+      }
+
+      const boxStart = {
+        x: Math.abs(
+          Math.max(
+            firstDrone.pos.x * topLeftBlip.dir.x,
+            secondDrone.pos.x * bottomRightBlip.dir.x
+          )
+        ),
+        y: Math.abs(
+          Math.max(
+            firstDrone.pos.y * topLeftBlip.dir.y,
+            secondDrone.pos.y * bottomRightBlip.dir.y,
+            FISH_HABITAT[fish.detail.type][-topLeftBlip.dir.y] *
+              topLeftBlip.dir.y
+          )
+        ),
+      };
+      fish.box = {
+        pos: boxStart,
+        size: {
+          x: boxBoundSize(
+            [0, boxStart.x, firstDrone.pos.x, secondDrone.pos.x, MAP_SIZE],
+            boxStart.x,
+            topLeftBlip.dir.x,
+            false
+          ),
+          y: boxBoundSize(
+            [
+              0,
+              boxStart.y,
+              firstDrone.pos.y,
+              secondDrone.pos.y,
+              FISH_HABITAT[fish.detail.type][topLeftBlip.dir.y],
+              MAP_SIZE,
+            ],
+            boxStart.y,
+            topLeftBlip.dir.y,
+            this.useSymetry
+          ),
+        },
+      };
     }
 
-    // for (const fish of Object.values(this.fishes)) {
-    //   console.error({ id: fish.id, box: fish.box });
-    // }
+    for (const fish of Object.values(this.fishes)) {
+      console.error({ id: fish.id, box: fish.box });
+    }
   }
 
   updateDroneCheckpoints() {
@@ -213,38 +227,25 @@ export class Game implements GameData {
         }
       }
 
-      // const symetricLimit = 5000 - otherDrone?.pos.x! - 5000;
-
       // reset if reached save range
       if (drone.pos.y < 500) {
         drone.checkPoints = [];
       }
-
-      // if (drone.checkPoints.length === 0) {
-      //   if (drone.droneId === 0 || drone.droneId === 1) {
-      //     drone.checkPoints.push({
-      //       pos: { x: drone.pos.x, y: 8500 },
-      //       unseen: 1,
-      //     });
-      //   } else {
-      //     drone.checkPoints.push({
-      //       pos: { x: drone.pos.x < 5000 ? 2300 : 7700, y: 8500 },
-      //       unseen: 1,
-      //     });
-      //   }
-      // }
 
       // TODO: handle too close centers
       let closestBoxCenter: Checkpoint | undefined = undefined;
       let shortestDist: number = Infinity;
       for (const fish of Object.values(this.fishes)) {
         if (fish.detail.type === -1) {
-          continue
+          continue;
         } else if (fish.lastBlipTurn !== this.turn) {
           continue;
         } else if (this.myScans.includes(fish.id)) {
           continue;
-        } else if (drone.scans.includes(fish.id) || otherDrone?.scans.includes(fish.id)) {
+        } else if (
+          drone.scans.includes(fish.id) ||
+          otherDrone?.scans.includes(fish.id)
+        ) {
           continue;
         }
 
