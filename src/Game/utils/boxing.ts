@@ -4,7 +4,11 @@ export function boxBoundSize(
   direction: -1 | 1,
   useSymetry: boolean
 ): number {
-const sortedThresholds = Array.from(new Set(thresholds))
+    // const symetricLimit = 5000 - otherDrone?.pos.x! - 5000;
+
+  const sortedThresholds = Array.from(new Set(thresholds)).sort(
+    (a, b) => a - b
+  );
 
   let i = sortedThresholds.findIndex((threshold) => {
     return threshold === start;

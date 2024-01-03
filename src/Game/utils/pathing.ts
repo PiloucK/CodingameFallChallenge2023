@@ -463,6 +463,9 @@ export function computeBestNextPos(
     // dronePos: drone.pos,
     // target,
   });
+  if (drone.pos.x === target.x && drone.pos.y === target.y) {
+    return (closestToTarget({ x: 0, y: 0 }, [], drone))
+  }
   const safePositions: Vector[] = [];
 
   const distToTarget = Math.hypot(

@@ -1,4 +1,4 @@
-import { MAP_SIZE } from "../Game.constants";
+import { FISH_HABITAT, MAP_SIZE } from "../Game.constants";
 import { Creature, FishDetail, FishId, Vector } from "../Game.types";
 
 export class Fish implements Creature {
@@ -30,12 +30,12 @@ export class Fish implements Creature {
 
   // move monsters
   // TODO: take into account potential monsters collisions and foe chasing
-  guesstimateMove(ratio?: number) {
+  guesstimateMove({ratio, postBoundCheck = false, turn = 0}: {ratio?: number, postBoundCheck?: boolean, turn?: number}) {
     if (
       this.guesstimatedSpeed === undefined ||
       this.guesstimatedPos === undefined
     ) {
-      return;
+      return
     }
 
     if (ratio === undefined) {
@@ -48,18 +48,23 @@ export class Fish implements Creature {
     };
     this.guesstimatedNextSpeed = this.guesstimatedSpeed;
 
+    if (postBoundCheck === false) {
+        return
+    }
+    // fails over 2500 as the intersection between monster dir and drone dir is calculated before rebound
+    // maybe solved by checking monster pos and calculate intersections again at ratio 1 but after rebound
     if (
       this.guesstimatedNextPos.x <= 0 ||
-      this.guesstimatedNextPos.x >= MAP_SIZE
+      this.guesstimatedNextPos.x >= MAP_SIZE - 1
     ) {
       this.guesstimatedNextSpeed.x *= -1; // Reverse the horizontal direction
       this.guesstimatedNextPos.x =
-        this.guesstimatedPos.x + this.guesstimatedNextSpeed.x * ratio; // Recompute the x position after bounce
+        this.guesstimatedPos.x + this.guesstimatedNextSpeed.x * ratio; // snap to fish zone
     }
 
     if (
-      this.guesstimatedNextPos.y <= 2500 ||
-      this.guesstimatedNextPos.y >= MAP_SIZE
+      this.guesstimatedNextPos.y <= FISH_HABITAT[this.detail.type][-1] ||
+      this.guesstimatedNextPos.y >= FISH_HABITAT[this.detail.type][1]
     ) {
       this.guesstimatedNextSpeed.y *= -1; // Reverse the vertical direction
       this.guesstimatedNextPos.y =

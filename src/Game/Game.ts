@@ -272,7 +272,7 @@ export class Game implements GameData {
         drone.checkPoints = [{ pos: { x: drone.pos.x, y: 0 }, unseen: 1 }];
       }
 
-      console.error({droneId: drone.droneId}, drone.checkPoints)
+      console.error({ droneId: drone.droneId }, drone.checkPoints);
     }
   }
 
@@ -298,6 +298,12 @@ export class Game implements GameData {
       this.fishes[fishId].guesstimatedPos = { x: fishX, y: fishY };
       this.fishes[fishId].guesstimatedSpeed = { x: fishVx, y: fishVy };
       this.fishes[fishId].lastSeenTurn = this.turn;
+
+      // TODO: init fish box and estimate next pos
+      this.fishes[fishId].box = {
+        pos: { x: fishX, y: fishY },
+        size: { x: 0, y: 0 },
+      };
     }
 
     const myRadarBlipCount = parseInt(readline());
@@ -309,12 +315,12 @@ export class Game implements GameData {
         fishId,
         blipDir:
           dir === "TL"
-            ? { height: -1, side: -1 }
+            ? { y: -1, x: -1 }
             : dir === "TR"
-            ? { height: -1, side: 1 }
+            ? { y: -1, x: 1 }
             : dir === "BR"
-            ? { height: 1, side: 1 }
-            : { height: 1, side: -1 },
+            ? { y: 1, x: 1 }
+            : { y: 1, x: -1 },
       });
       this.fishes[fishId].lastBlipTurn = this.turn;
     }
@@ -334,10 +340,8 @@ export class Game implements GameData {
     for (const fishId in this.fishes) {
       let fish = this.fishes[fishId];
 
-      if (fish.detail.type === -1) {
-        fish.guesstimateMove();
-        fish.move(this.turn);
-      }
+      fish.guesstimateMove({postBoundCheck: true, turn: this.turn});
+      fish.move(this.turn);
     }
   }
 }

@@ -65,17 +65,6 @@ export class Drone {
         nextCheckPoint.pos
       );
 
-      // if after mooving i'm closer than 400 from the checkpoint, I consider it visited
-      // it allows me to always move from at least 400
-      // if (
-      //   Math.hypot(
-      //     nextCheckPoint.pos.x - nextPos.x,
-      //     nextCheckPoint.pos.y - nextPos.y
-      //   ) < 400
-      // ) {
-      //   nextCheckPoint.unseen = 0;
-      // }
-
       console.log(
         `MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`
       );

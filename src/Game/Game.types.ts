@@ -9,8 +9,8 @@ export interface Vector {
 export type Checkpoint = { pos: Vector; unseen: number };
 
 export type Direction = {
-  height: -1 | 1; // Top or Bottom
-  side: -1 | 1; // Left or Right
+  x: -1 | 1; // Left or Right
+  y: -1 | 1; // Top or Bottom
 };
 
 export type FishId = number;
@@ -37,7 +37,6 @@ export interface RadarBlip {
 }
 
 export interface GameData {
-  mapSize: number;
   weightedMap: Uint8ClampedArray; // contains probability of finding a fish
   fishes: Record<FishId, Fish>;
   drones: Record<DroneId, Drone>;
