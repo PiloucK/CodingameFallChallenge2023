@@ -9,7 +9,11 @@ import {
 } from "./Game.types";
 import { Drone } from "./drone/Drone";
 import { Fish, VisibleFish } from "./fish/Fish";
-import { boxBoundSize } from "./utils/boxing";
+import {
+  boxBoundSize,
+  getReminiblip,
+  normalizeBlips,
+} from "./utils/boxing";
 
 export class Game implements GameData {
   weightedMap: Uint8ClampedArray = new Uint8ClampedArray(
@@ -46,17 +50,11 @@ export class Game implements GameData {
     const myScanCount = parseInt(readline());
     for (let i = 0; i < myScanCount; i++) {
       const fishId = parseInt(readline());
-      if (this.fishes[fishId].detail.type === 2) {
-        this.useSymetry = false;
-      }
       this.myScans.push(fishId);
     }
     const foeScanCount = parseInt(readline());
     for (let i = 0; i < foeScanCount; i++) {
       const fishId = parseInt(readline());
-      if (this.fishes[fishId].detail.type === 2) {
-        this.useSymetry = false;
-      }
       this.foeScans.push(fishId);
     }
 
@@ -111,6 +109,10 @@ export class Game implements GameData {
     for (let i = 0; i < droneScanCount; i++) {
       const [droneId, fishId] = readline().split(" ").map(Number);
       this.drones[droneId].scans.push(fishId);
+
+      if (this.fishes[fishId].detail.type === 2) {
+        this.useSymetry = false;
+      }
     }
   }
 
@@ -140,55 +142,58 @@ export class Game implements GameData {
         continue;
       }
 
-      const topLeftBlip: { pos: Vector; dir: Direction } = {
-        pos: { x: firstDrone.pos.x, y: firstDrone.pos.y },
-        dir: {
-          x: firstDrone.blips[i].blipDir.x,
-          y: firstDrone.blips[i].blipDir.y,
-        },
-      };
-      const bottomRightBlip: { pos: Vector; dir: Direction } = {
-        pos: { x: secondDrone.pos.x, y: secondDrone.pos.y },
-        dir: {
-          x: secondDrone.blips[i].blipDir.x,
-          y: secondDrone.blips[i].blipDir.y,
-        },
-      };
+      const { topLeftBlip, bottomRightBlip } = normalizeBlips(
+        firstDrone.pos,
+        secondDrone.pos,
+        firstDrone.blips[i].blipDir,
+        secondDrone.blips[i].blipDir
+      );
 
-      if (firstDrone.pos.x > secondDrone.pos.x) {
-        [topLeftBlip.pos.x, bottomRightBlip.pos.x] = [
-          bottomRightBlip.pos.x,
-          topLeftBlip.pos.x,
-        ];
-      }
-      if (firstDrone.pos.y > secondDrone.pos.y) {
-        [topLeftBlip.pos.y, bottomRightBlip.pos.y] = [
-          bottomRightBlip.pos.y,
-          topLeftBlip.pos.y,
-        ];
-      }
+      const { topLeftBlip: tlReminiBlip, bottomRightBlip: brReminiBlip } =
+        getReminiblip({
+          firstDrone,
+          secondDrone,
+          fishId: firstDrone.blips[i].fishId,
+          topLeftBlip,
+          bottomRightBlip,
+        });
+
+      //   Math.sign(fish.box.size.x) !== bottomRightBlip.dir.x
 
       const boxStart = {
         x: Math.abs(
           Math.max(
-            firstDrone.pos.x * topLeftBlip.dir.x,
-            secondDrone.pos.x * bottomRightBlip.dir.x
+            topLeftBlip.pos.x * topLeftBlip.dir.x,
+            bottomRightBlip.pos.x * bottomRightBlip.dir.x,
+            tlReminiBlip.pos.x * tlReminiBlip.dir.x,
+            brReminiBlip.pos.x * brReminiBlip.dir.x
           )
         ),
         y: Math.abs(
           Math.max(
-            firstDrone.pos.y * topLeftBlip.dir.y,
-            secondDrone.pos.y * bottomRightBlip.dir.y,
+            topLeftBlip.pos.y * topLeftBlip.dir.y,
+            bottomRightBlip.pos.y * bottomRightBlip.dir.y,
             FISH_HABITAT[fish.detail.type][-topLeftBlip.dir.y] *
-              topLeftBlip.dir.y
+              topLeftBlip.dir.y,
+            tlReminiBlip.pos.y * tlReminiBlip.dir.y,
+            brReminiBlip.pos.y * brReminiBlip.dir.y
           )
         ),
       };
+
       fish.box = {
         pos: boxStart,
         size: {
           x: boxBoundSize(
-            [0, boxStart.x, firstDrone.pos.x, secondDrone.pos.x, MAP_SIZE],
+            [
+              0,
+              boxStart.x,
+              topLeftBlip.pos.x,
+              bottomRightBlip.pos.x,
+              tlReminiBlip.pos.x,
+              brReminiBlip.pos.x,
+              MAP_SIZE,
+            ],
             boxStart.x,
             topLeftBlip.dir.x,
             false
@@ -197,9 +202,11 @@ export class Game implements GameData {
             [
               0,
               boxStart.y,
-              firstDrone.pos.y,
-              secondDrone.pos.y,
+              topLeftBlip.pos.y,
+              bottomRightBlip.pos.y,
               FISH_HABITAT[fish.detail.type][topLeftBlip.dir.y],
+              tlReminiBlip.pos.y,
+              brReminiBlip.pos.y,
               MAP_SIZE,
             ],
             boxStart.y,
@@ -237,15 +244,22 @@ export class Game implements GameData {
       let shortestDist: number = Infinity;
       for (const fish of Object.values(this.fishes)) {
         if (fish.detail.type === -1) {
+          console.error(fish.id, ":dont chase monster");
           continue;
         } else if (fish.lastBlipTurn !== this.turn) {
+          console.error(fish.id, ":not in map anymore");
           continue;
         } else if (this.myScans.includes(fish.id)) {
+          console.error(fish.id, ":already saved champ");
           continue;
         } else if (
           drone.scans.includes(fish.id) ||
           otherDrone?.scans.includes(fish.id)
         ) {
+          console.error(fish.id, ":got that one");
+          continue;
+        } else if (this.useSymetry && fish.detail.type !== 2) {
+          console.error(fish.id, ":not a priority");
           continue;
         }
 
@@ -258,6 +272,7 @@ export class Game implements GameData {
           Math.pow(boxCenter.y - drone.pos.y, 2);
 
         if (distToDrone < shortestDist) {
+          console.error("+", { id: fish.id, box: fish.box });
           shortestDist = distToDrone;
           closestBoxCenter = {
             pos: { x: boxCenter.x, y: boxCenter.y },
@@ -299,6 +314,8 @@ export class Game implements GameData {
       this.fishes[fishId].guesstimatedSpeed = { x: fishVx, y: fishVy };
       this.fishes[fishId].lastSeenTurn = this.turn;
 
+      this.fishes[fishId].guesstimateMove({ postBoundCheck: true });
+
       // TODO: init fish box and estimate next pos
       this.fishes[fishId].box = {
         pos: { x: fishX, y: fishY },
@@ -325,6 +342,7 @@ export class Game implements GameData {
       this.fishes[fishId].lastBlipTurn = this.turn;
     }
 
+    // this.scorestimate();
     this.updateDroneCheckpoints();
 
     for (const droneId of this.myDrones) {
@@ -340,7 +358,7 @@ export class Game implements GameData {
     for (const fishId in this.fishes) {
       let fish = this.fishes[fishId];
 
-      fish.guesstimateMove({postBoundCheck: true, turn: this.turn});
+      fish.guesstimateMove({ postBoundCheck: true, turn: this.turn });
       fish.move(this.turn);
     }
   }

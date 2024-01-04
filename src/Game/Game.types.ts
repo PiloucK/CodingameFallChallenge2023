@@ -36,6 +36,11 @@ export interface RadarBlip {
   blipDir: Direction;
 }
 
+export interface BoxingBlip {
+  pos: Vector;
+  dir: Direction;
+}
+
 export interface GameData {
   weightedMap: Uint8ClampedArray; // contains probability of finding a fish
   fishes: Record<FishId, Fish>;

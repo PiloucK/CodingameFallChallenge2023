@@ -252,7 +252,7 @@ function updateToSafePosForMonster(
   // console.error("---------Recursion|", currentlyCheckingPosition, ratio)
 
   // move monster for the step
-  monster.guesstimateMove(ratio);
+  monster.guesstimateMove({ratio});
 
   //   console.error(monster);
   // if the ratio is over 1, we have checked for the max distance possible for the drone

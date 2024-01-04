@@ -5,6 +5,7 @@ import { computeBestNextPos } from "../utils/pathing";
 export class Drone {
   droneId: DroneId;
   pos: Vector;
+  previousPos: Vector;
   dead: boolean;
   battery: number;
   lastBattery: number; // in order to keep track of foe's light activation
@@ -13,10 +14,12 @@ export class Drone {
   lastBlips: RadarBlip[];
   checkPoints: Checkpoint[];
   light: number;
+  shouldAscend: boolean;
 
   constructor(id: DroneId, pos: Vector, dead: number, battery: number) {
     this.droneId = id;
     this.pos = pos;
+    this.previousPos = {x: 0, y: 0}
     this.dead = dead !== 0;
     this.battery = battery;
     this.lastBattery = 30; // battery at start
@@ -25,9 +28,11 @@ export class Drone {
     this.lastBlips = [];
     this.checkPoints = [];
     this.light = 0;
+    this.shouldAscend = false;
   }
 
   update(pos: Vector, dead: number, battery: number) {
+    this.previousPos = {x: this.pos.x, y: this.pos.y};
     this.pos = pos;
     this.dead = dead !== 0;
     this.lastBattery = this.battery;

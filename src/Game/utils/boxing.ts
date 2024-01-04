@@ -1,10 +1,13 @@
+import { BoxingBlip, Direction, FishId, Vector } from "../Game.types";
+import { Drone } from "../drone/Drone";
+
 export function boxBoundSize(
   thresholds: number[],
   start: number,
   direction: -1 | 1,
   useSymetry: boolean
 ): number {
-    // const symetricLimit = 5000 - otherDrone?.pos.x! - 5000;
+  // const symetricLimit = 5000 - otherDrone?.pos.x! - 5000;
 
   const sortedThresholds = Array.from(new Set(thresholds)).sort(
     (a, b) => a - b
@@ -13,6 +16,134 @@ export function boxBoundSize(
   let i = sortedThresholds.findIndex((threshold) => {
     return threshold === start;
   });
-//   console.error({ i, direction }, sortedThresholds);
+  console.error({ i, direction }, sortedThresholds);
   return Math.abs(start - sortedThresholds[i + direction]) * direction;
+}
+
+export function normalizeBlips(
+  firstDronePos: Vector,
+  secondDronePos: Vector,
+  firstDroneBlip: Direction,
+  secondDroneBlip: Direction
+): {
+  topLeftBlip: BoxingBlip;
+  bottomRightBlip: BoxingBlip;
+} {
+  const topLeftBlip: BoxingBlip = {
+    pos: { x: firstDronePos.x, y: firstDronePos.y },
+    dir: {
+      x: firstDroneBlip.x,
+      y: firstDroneBlip.y,
+    },
+  };
+  const bottomRightBlip: BoxingBlip = {
+    pos: { x: secondDronePos.x, y: secondDronePos.y },
+    dir: {
+      x: secondDroneBlip.x,
+      y: secondDroneBlip.y,
+    },
+  };
+
+  if (firstDronePos.x > secondDronePos.x) {
+    [topLeftBlip.pos.x, bottomRightBlip.pos.x] = [
+      bottomRightBlip.pos.x,
+      topLeftBlip.pos.x,
+    ];
+    [topLeftBlip.dir.x, bottomRightBlip.dir.x] = [
+      bottomRightBlip.dir.x,
+      topLeftBlip.dir.x,
+    ];
+  }
+  if (firstDronePos.y > secondDronePos.y) {
+    [topLeftBlip.pos.y, bottomRightBlip.pos.y] = [
+      bottomRightBlip.pos.y,
+      topLeftBlip.pos.y,
+    ];
+    [topLeftBlip.dir.y, bottomRightBlip.dir.y] = [
+      bottomRightBlip.dir.y,
+      topLeftBlip.dir.y,
+    ];
+  }
+
+  return { topLeftBlip, bottomRightBlip };
+}
+
+export function getReminiblip({
+  firstDrone,
+  secondDrone,
+  fishId,
+  topLeftBlip,
+  bottomRightBlip,
+}: {
+  firstDrone: Drone;
+  secondDrone: Drone;
+  fishId: FishId;
+  topLeftBlip: BoxingBlip;
+  bottomRightBlip: BoxingBlip;
+}): {
+  topLeftBlip: BoxingBlip;
+  bottomRightBlip: BoxingBlip;
+} {
+  let firstPreviousBlipDir = firstDrone.lastBlips.find((blip) => {
+    return fishId === blip.fishId;
+  })?.blipDir;
+  let secondPreviousBlipDir = secondDrone.lastBlips.find((blip) => {
+    return fishId === blip.fishId;
+  })?.blipDir;
+
+  if (firstPreviousBlipDir === undefined) {
+    firstPreviousBlipDir = secondPreviousBlipDir;
+  }
+  if (secondPreviousBlipDir === undefined) {
+    secondPreviousBlipDir = firstPreviousBlipDir;
+  }
+
+  if (
+    firstPreviousBlipDir === undefined ||
+    secondPreviousBlipDir === undefined
+  ) {
+    return { topLeftBlip, bottomRightBlip };
+  }
+
+  const {
+    topLeftBlip: previousTopLeftBlip,
+    bottomRightBlip: previousBottomRightBlip,
+  } = normalizeBlips(
+    firstDrone.previousPos,
+    secondDrone.previousPos,
+    firstPreviousBlipDir,
+    secondPreviousBlipDir
+  );
+
+  if (previousTopLeftBlip.dir.x !== topLeftBlip.dir.x) {
+    previousTopLeftBlip.pos.x = topLeftBlip.pos.x + 400 * topLeftBlip.dir.x;
+  } else {
+    previousTopLeftBlip.pos.x = topLeftBlip.pos.x;
+    previousTopLeftBlip.dir.x = topLeftBlip.dir.x;
+  }
+  if (previousTopLeftBlip.dir.y !== topLeftBlip.dir.y) {
+    previousTopLeftBlip.pos.y = topLeftBlip.pos.y + 400 * topLeftBlip.dir.y;
+  } else {
+    previousTopLeftBlip.pos.y = topLeftBlip.pos.y;
+    previousTopLeftBlip.dir.y = topLeftBlip.dir.y;
+  }
+  if (previousBottomRightBlip.dir.x !== bottomRightBlip.dir.x) {
+    previousBottomRightBlip.pos.x =
+      bottomRightBlip.pos.x + 400 * bottomRightBlip.dir.x;
+  } else {
+    previousBottomRightBlip.pos.x = bottomRightBlip.pos.x;
+    previousBottomRightBlip.dir.x = bottomRightBlip.dir.x;
+  }
+  if (previousBottomRightBlip.dir.y !== bottomRightBlip.dir.y) {
+    previousBottomRightBlip.pos.y =
+      bottomRightBlip.pos.y + 400 * bottomRightBlip.dir.y;
+  } else {
+    previousBottomRightBlip.pos.y = bottomRightBlip.pos.y;
+    previousBottomRightBlip.dir.y = bottomRightBlip.dir.y;
+  }
+
+  return {
+    topLeftBlip: previousTopLeftBlip,
+    bottomRightBlip: previousBottomRightBlip,
+  };
 }

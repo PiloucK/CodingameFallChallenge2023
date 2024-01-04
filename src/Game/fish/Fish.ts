@@ -51,24 +51,35 @@ export class Fish implements Creature {
     if (postBoundCheck === false) {
         return
     }
-    // fails over 2500 as the intersection between monster dir and drone dir is calculated before rebound
-    // maybe solved by checking monster pos and calculate intersections again at ratio 1 but after rebound
+
+    // if swimming at 400 it is fleeing, if at 540 it is chasing. otherwise the speed has to be 270 or 200
+    const isSwimmingClamly = Math.hypot(this.guesstimatedSpeed.x, this.guesstimatedSpeed.y) < 390
+
     if (
       this.guesstimatedNextPos.x <= 0 ||
       this.guesstimatedNextPos.x >= MAP_SIZE - 1
     ) {
-      this.guesstimatedNextSpeed.x *= -1; // Reverse the horizontal direction
-      this.guesstimatedNextPos.x =
-        this.guesstimatedPos.x + this.guesstimatedNextSpeed.x * ratio; // snap to fish zone
+      if (isSwimmingClamly) {
+        this.guesstimatedNextSpeed.x *= -1; // Reverse the horizontal direction
+        this.guesstimatedNextPos.x = this.guesstimatedPos.x + this.guesstimatedSpeed.x * ratio
+      } else if (this.guesstimatedNextPos.x <= 0) {
+        this.guesstimatedNextPos.x = 0; // snap to fish zone
+      } else {
+        this.guesstimatedNextPos.x = MAP_SIZE - 1
+      }
     }
-
     if (
       this.guesstimatedNextPos.y <= FISH_HABITAT[this.detail.type][-1] ||
       this.guesstimatedNextPos.y >= FISH_HABITAT[this.detail.type][1]
     ) {
+      if (isSwimmingClamly) {
       this.guesstimatedNextSpeed.y *= -1; // Reverse the vertical direction
-      this.guesstimatedNextPos.y =
-        this.guesstimatedPos.y + this.guesstimatedNextSpeed.y * ratio; // Recompute the y position after bounce
+        this.guesstimatedNextPos.y = this.guesstimatedPos.y + this.guesstimatedSpeed.y * ratio
+      } else if (this.guesstimatedNextPos.y <= FISH_HABITAT[this.detail.type][-1]) {
+        this.guesstimatedNextPos.y = FISH_HABITAT[this.detail.type][-1] // snap to upper fish bound
+      } else {
+        this.guesstimatedNextPos.y = FISH_HABITAT[this.detail.type][1] // snap to lower fish bound
+      }
     }
   }
 
