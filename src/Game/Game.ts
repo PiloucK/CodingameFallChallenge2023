@@ -183,7 +183,7 @@ export class Game implements GameData {
 
       //       const mirroryFish =
       //       this.fishes[firstDrone.blips[mirroryBlipIndex].fishId];
-    
+
       //     if (mirroryFish.lastSeenTurn! >= this.turn - 1 && mirroryFish.id !== -1) {
       //       // mirroryFish.guesstimateMove({ postBoundCheck: false });
       //       fish.box = {
@@ -193,7 +193,7 @@ export class Game implements GameData {
       //         },
       //         size: { x: 0, y: 0 },
       //       };
-    
+
       //       console.error("mirrored exact pos:", {
       //         id: fish.id,
       //         mirror: mirroryFish.id,
@@ -201,17 +201,23 @@ export class Game implements GameData {
       //       });
       //       continue;
       //     }
-    
+
       // }
-    
+
       const getMirroryXBlips = () => {
         if (
           mirroryBlipIndex === -1 ||
           Math.sign(firstDrone.pos.x - 5000) ===
-            Math.sign(secondDrone.pos.x - 5000)
+            Math.sign(secondDrone.pos.x - 5000) ||
+          !this.firstDescent
         ) {
           return { starts: [], bounds: [] };
         }
+
+        // console.error("mirror gen:", {
+        //   id: firstDrone.blips[i],
+        //   mirror: firstDrone.blips[mirroryBlipIndex],
+        // });
 
         const mirroryBlips = normalizeBlips(
           firstDrone.pos,
@@ -635,18 +641,23 @@ export class Game implements GameData {
 
       // TODO: make it so it ascends if it participates towards the win
       // maybe it should chase fishes out of the map
-      drone.shouldStayAbove = this.ascending;
+      drone.shouldStayAbove =
+        this.ascending ||
+        (this.firstDescent && // TODO: add if a drone with one type 2 should ascend
+          drone.scans.find(
+            (fishId) => this.fishes[fishId].detail.type === 2
+          ) !== undefined);
       drone.shouldAscend =
-        this.now ||
+        // this.now ||
         // (this.firstDescent &&  // TODO: add if a drone with one type 2 should ascend
         //   drone.scans.find(
         //     (fishId) => this.fishes[fishId].detail.type === 2
         //   ) !== undefined) ||
-        (!this.firstDescent &&
-          ((this.myScorestimate >= this.foeScorestimate &&
-            drone.baseImpactStimate > otherDrone?.baseImpactStimate!) ||
-            (drone.baseImpactStimate == otherDrone?.baseImpactStimate &&
-              drone.droneId < otherDrone.droneId)));
+        !this.firstDescent &&
+        ((this.myScorestimate >= this.foeScorestimate &&
+          drone.baseImpactStimate > otherDrone?.baseImpactStimate!) ||
+          (drone.baseImpactStimate == otherDrone?.baseImpactStimate &&
+            drone.droneId < otherDrone.droneId));
 
       console.error({
         above: drone.shouldStayAbove,

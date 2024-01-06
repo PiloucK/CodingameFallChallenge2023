@@ -63,8 +63,21 @@ export class Drone {
     let nextCheckPoint = this.checkPoints.find((value) => {
       return value.unseen;
     });
-
     const getLightValue = (nextPos: Vector) => {
+      const captures = new Set([
+        ...game.drones[game.myDrones[0]].scans,
+        ...game.drones[game.myDrones[1]].scans,
+      ]);
+      if (
+        game.firstDescent &&
+        nextPos.y > 5000 - 600 &&
+        this.pos.y < 5000 &&
+        captures.size < 2
+      ) {
+        this.light = 1;
+        return;
+      }
+
       Object.values(fishes).forEach((fish) => {
         if (fish.lastBlipTurn !== game.turn) {
           return;
@@ -76,13 +89,10 @@ export class Drone {
           return;
         }
 
-        // const lightThreshold =
-        //   fish.detail.type === 0 ? 600 : fish.detail.type === 1 ? 1000 : ;
-
         const furthestCorner = boxFurthestCorner(nextPos, fish.box);
         const distToCorner = Math.hypot(
-          this.pos.x - furthestCorner.x,
-          this.pos.y - furthestCorner.y
+          nextPos.x - furthestCorner.x,
+          nextPos.y - furthestCorner.y
         );
         console.error("light eval:", {
           id: this.droneId,
@@ -91,9 +101,19 @@ export class Drone {
           furthestCorner,
         });
 
+        if (
+          distToCorner >=
+          Math.hypot(
+            this.pos.x - furthestCorner.x,
+            this.pos.y - furthestCorner.y
+          )
+        ) {
+          return;
+        }
+
         // TODO: find a condition to light depending on monster info
         if (fish.detail.type === 0) {
-          if (distToCorner < 2600) {
+          if (distToCorner < 2000) {
             // console.error("close enough:", {
             //   id: this.droneId,
             //   fishId: fish.id,
@@ -104,7 +124,7 @@ export class Drone {
           }
         } else if (fish.detail.type === 1) {
           if (
-            distToCorner < 3200 &&
+            distToCorner < 2600 &&
             (!game.firstDescent || this.battery >= 25)
           ) {
             // console.error("close enough:", {
@@ -137,7 +157,7 @@ export class Drone {
       });
 
       getLightValue(nextPos);
-    //   this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
+      //   this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
 
       console.log(
         `MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`
@@ -150,7 +170,7 @@ export class Drone {
       );
 
       getLightValue(nextPos);
-    //   this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
+      //   this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
 
       console.log(
         `MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`
