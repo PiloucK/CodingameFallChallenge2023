@@ -1,14 +1,15 @@
 import { BoxingBlip, Direction, FishId, Vector } from "../Game.types";
 import { Drone } from "../drone/Drone";
 
+export const get1DMirror = (pos: number, reference: number) => {
+  return reference - (pos - reference);
+};
+
 export function boxBoundSize(
   thresholds: number[],
   start: number,
-  direction: -1 | 1,
-  useSymetry: boolean
+  direction: -1 | 1
 ): number {
-  // const symetricLimit = 5000 - otherDrone?.pos.x! - 5000;
-
   const sortedThresholds = Array.from(new Set(thresholds)).sort(
     (a, b) => a - b
   );
@@ -16,7 +17,8 @@ export function boxBoundSize(
   let i = sortedThresholds.findIndex((threshold) => {
     return threshold === start;
   });
-  console.error({ i, direction }, sortedThresholds);
+
+  //   console.error({ i, direction }, sortedThresholds);
   return Math.abs(start - sortedThresholds[i + direction]) * direction;
 }
 
@@ -146,4 +148,42 @@ export function getReminiblip({
     topLeftBlip: previousTopLeftBlip,
     bottomRightBlip: previousBottomRightBlip,
   };
+}
+
+export function squaredDistance(pos: Vector, pos2: Vector) {
+  return Math.pow(pos.x - pos2.x, 2) + Math.pow(pos.y - pos2.y, 2);
+}
+
+export function boxFurthestCorner(
+  pos: Vector,
+  box: { pos: Vector; size: Vector }
+): Vector {
+  let furthestCorner = pos;
+  let furthestCornerDist = 0;
+
+  let nextCorner = box.pos;
+  let dist = squaredDistance(pos, nextCorner);
+  if (dist > furthestCornerDist) {
+    furthestCorner = nextCorner;
+    furthestCornerDist = dist;
+  }
+  nextCorner = { x: box.pos.x + box.size.x, y: box.pos.y };
+  dist = squaredDistance(pos, nextCorner);
+  if (dist > furthestCornerDist) {
+    furthestCorner = nextCorner;
+    furthestCornerDist = dist;
+  }
+  nextCorner = { x: box.pos.x, y: box.pos.y + box.size.y };
+  dist = squaredDistance(pos, nextCorner);
+  if (dist > furthestCornerDist) {
+    furthestCorner = nextCorner;
+    furthestCornerDist = dist;
+  }
+  nextCorner = { x: box.pos.x + box.size.x, y: box.pos.y + box.size.y };
+  dist = squaredDistance(pos, nextCorner);
+  if (dist > furthestCornerDist) {
+    furthestCorner = nextCorner;
+    furthestCornerDist = dist;
+  }
+  return furthestCorner;
 }

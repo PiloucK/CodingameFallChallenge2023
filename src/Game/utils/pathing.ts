@@ -1,6 +1,6 @@
 import {
   DRONE_MAX_MOVE_DIST,
-  STATIC_SAFETY_RADIUS,
+  drone.safetyRadius,
   STEP_RATIO,
 } from "../Game.constants";
 import { FishId, Vector } from "../Game.types";
@@ -120,7 +120,7 @@ function rotateSafePos(
   positionToRotate: Vector, // direction to overwrite in safePositions
   drone: Drone
 ): Vector | null {
-    console.error("rotation----->", positionToRotate);
+    // console.error("rotation----->", positionToRotate);
   // build an array of all the potential directions
   const angles: { angle: number; position: Vector }[] = safePositions
     .map((pos) => {
@@ -160,11 +160,11 @@ function rotateSafePos(
   let i = 0,
   clockwise = false;
   while (angles[i].position.x !== positionToRotate.x || angles[i].position.y !== positionToRotate.y) {
-    console.error(i, positionToRotate, angles[i].position)
+    // console.error(i, positionToRotate, angles[i].position)
 
     // if I see the other safe position, it mean this position is the first clockwise
     if (safePositions.includes(angles[i].position)) {
-        console.error('clockwise------------------')
+        // console.error('clockwise------------------')
       clockwise = true;
     }
     i++;
@@ -238,7 +238,7 @@ function isSafeStep(
     monster.guesstimatedNextPos.y - currentPos.y
   );
 
-  return distToMonsterGuesstimatedNextPos >= STATIC_SAFETY_RADIUS;
+  return distToMonsterGuesstimatedNextPos >= drone.safetyRadius;
 }
 
 function updateToSafePosForMonster(
@@ -272,24 +272,25 @@ function updateToSafePosForMonster(
     );
   }
 
-  console.error("---------|");
-  console.error(
-    "drone ",
-    drone.droneId,
-    "|",
-    monster.id,
-    " !dangerous move: ",
-    safePositions,
-    { first: initialGuessPosition },
-    { current: currentlyCheckingPosition },
-    ratio
-  );
+//   console.error("---------|");
+//   console.error(
+//     "drone ",
+//     drone.droneId,
+//     "|",
+//     monster.id,
+//     " !dangerous move: ",
+//     safePositions,
+//     { first: initialGuessPosition },
+//     { current: currentlyCheckingPosition },
+//     ratio
+//   );
   // otherwise, compute pos at the intersections of the safety range and the travelled distance
   const safeIntersections: Vector[] = circleIntersections(
     { center: drone.pos, radius: DRONE_MAX_MOVE_DIST * ratio },
-    { center: monster.guesstimatedNextPos, radius: STATIC_SAFETY_RADIUS + 10 }
+    { center: monster.guesstimatedNextPos, radius: drone.safetyRadius
+ + 10 }
   );
-    console.error("--",  safeIntersections );
+    // console.error("--",  safeIntersections );
 
   if (safePositions.length === 0) {
     safeIntersections.forEach((point) => {
@@ -435,11 +436,11 @@ function recursiveCheckThrough(
   }
 
   if (monstersAvoided.length !== 0) {
-    console.error("$$$$$recheck->", {
-      previousCheckPositions,
-      safePositions,
-      droneId: drone.droneId,
-    });
+    // console.error("$$$$$recheck->", {
+    //   previousCheckPositions,
+    //   safePositions,
+    //   droneId: drone.droneId,
+    // });
     return recursiveCheckThrough(
       safePositions,
       initialGuessPosition,
@@ -448,7 +449,7 @@ function recursiveCheckThrough(
     );
   }
 
-  console.error("|||||||||", safePositions);
+//   console.error("|||||||||", safePositions);
   return safePositions;
 }
 
@@ -458,11 +459,12 @@ export function computeBestNextPos(
   fishes: Record<FishId, Fish>,
   target: Vector
 ): Vector {
-  console.error("\n\n Computation\n", {
-    droneId: drone.droneId,
-    // dronePos: drone.pos,
-    // target,
-  });
+//   console.error("\n\n Computation\n", {
+//     droneId: drone.droneId,
+//     // dronePos: drone.pos,
+//     // target,
+//   });
+
   if (drone.pos.x === target.x && drone.pos.y === target.y) {
     return (closestToTarget({ x: 0, y: 0 }, [], drone))
   }
@@ -501,14 +503,14 @@ export function computeBestNextPos(
     console.error("damn, null??");
     return closestToTarget({ x: 0, y: 0 }, [], drone);
   }
-  console.error("-before checking closest to target: ", { safePositions });
+//   console.error("-before checking closest to target: ", { safePositions });
 
   if (safePositions.length === 0) {
     safePositions.push(initialGuessPosition);
   }
 
-  console.error("before checking closest to target: ", { safePositions });
-  console.error("Compute ends\n\n");
+//   console.error("before checking closest to target: ", { safePositions });
+//   console.error("Compute ends\n\n");
 
   // TODO: redo calculation for immediate next turn to see which one end up closer
   // TODO: guesstimate and move monsters to do next turn calc

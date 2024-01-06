@@ -53,6 +53,8 @@ export class Fish implements Creature {
     }
 
     // if swimming at 400 it is fleeing, if at 540 it is chasing. otherwise the speed has to be 270 or 200
+    // only works when I just saw the fish
+    // TODO: find if the fish is either chasing (in light range) or fleeing (<900 of moving drone)
     const isSwimmingClamly = Math.hypot(this.guesstimatedSpeed.x, this.guesstimatedSpeed.y) < 390
 
     if (
