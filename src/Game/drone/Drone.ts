@@ -129,7 +129,7 @@ export class Drone {
       });
     };
 
-    // this.light = 0;
+    this.light = 0;
     if (!nextCheckPoint) {
       const nextPos: Vector = computeBestNextPos(this, fishes, {
         x: this.pos.x,
@@ -137,7 +137,7 @@ export class Drone {
       });
 
       getLightValue(nextPos);
-      this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
+    //   this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
 
       console.log(
         `MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`
@@ -150,7 +150,7 @@ export class Drone {
       );
 
       getLightValue(nextPos);
-      this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
+    //   this.light = this.pos.y < 2000 ? 0 : this.light !== 0 ? 0 : 1;
 
       console.log(
         `MOVE ${Math.floor(nextPos.x)} ${Math.floor(nextPos.y)} ${this.light}`
