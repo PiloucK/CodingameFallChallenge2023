@@ -8,7 +8,11 @@ import {
   getReminiblip,
   normalizeBlips,
 } from "./utils/boxing";
-import { computeBestNextPos } from "./utils/pathing";
+import {
+  closestToTarget,
+  computeBestNextPos,
+  findTangentPointsOnCircle,
+} from "./utils/pathing";
 
 export class Game implements GameData {
   weightedMap: Uint8ClampedArray = new Uint8ClampedArray(
@@ -288,7 +292,7 @@ export class Game implements GameData {
               bottomRightBlip.pos.x,
               tlReminiBlip.pos.x,
               brReminiBlip.pos.x,
-              MAP_SIZE,
+              MAP_SIZE - 1,
               ...mirroryXBlips.bounds,
             ],
             boxStart.x,
@@ -303,7 +307,7 @@ export class Game implements GameData {
               FISH_HABITAT[fish.detail.type][topLeftBlip.dir.y],
               tlReminiBlip.pos.y,
               brReminiBlip.pos.y,
-              MAP_SIZE,
+              MAP_SIZE - 1,
             ],
             boxStart.y,
             Math.sign(closestY) as -1 | 1
@@ -632,11 +636,11 @@ export class Game implements GameData {
     for (const droneId of this.myDrones) {
       const drone = this.drones[droneId];
 
-      let otherDrone;
-      for (const id of this.myDrones) {
-        if (id !== droneId) {
-          otherDrone = this.drones[id];
-        }
+      let secondDrone: Drone;
+      if (this.myDrones[0] === drone.droneId) {
+        secondDrone = this.drones[this.myDrones[1]];
+      } else {
+        secondDrone = this.drones[this.myDrones[0]];
       }
 
       // TODO: make it so it ascends if it participates towards the win
@@ -655,9 +659,9 @@ export class Game implements GameData {
         //   ) !== undefined) ||
         !this.firstDescent &&
         ((this.myScorestimate >= this.foeScorestimate &&
-          drone.baseImpactStimate > otherDrone?.baseImpactStimate!) ||
-          (drone.baseImpactStimate == otherDrone?.baseImpactStimate &&
-            drone.droneId < otherDrone.droneId));
+          drone.baseImpactStimate > secondDrone?.baseImpactStimate!) ||
+          (drone.baseImpactStimate == secondDrone?.baseImpactStimate &&
+            drone.droneId < secondDrone.droneId));
 
       console.error({
         above: drone.shouldStayAbove,
@@ -670,79 +674,170 @@ export class Game implements GameData {
         drone.checkPoints = [];
       }
 
-      // TODO: handle too close centers
-      // TODO: change to closest target, and use tangents to the inscribed circle
-      let closestBoxCenter: Checkpoint | undefined = undefined;
-      let shortestDist: number = Infinity;
-      for (const fish of Object.values(this.fishes)) {
-        if (fish.detail.type === -1) {
-          //   console.error(fish.id, ":dont chase monster");
-          continue;
-        } else if (fish.lastBlipTurn !== this.turn) {
-          //   console.error(fish.id, ":not in map anymore");
-          continue;
-        } else if (this.myScans.includes(fish.id)) {
-          //   console.error(fish.id, ":already saved champ");
-          continue;
-        } else if (
-          drone.scans.includes(fish.id) ||
-          otherDrone?.scans.includes(fish.id)
-        ) {
-          //   console.error(fish.id, ":got that one");
-          continue;
-        } else if (this.firstDescent && fish.detail.type !== 2) {
-          //   console.error(fish.id, ":not a priority");
-          continue;
-        }
+      //TODO: what if nothing's left to scan
 
-        const boxCenter = {
-          x: fish.box.pos.x + fish.box.size.x / 2,
-          y: fish.box.pos.y + fish.box.size.y / 2,
-        };
+      let bestBet: Checkpoint | undefined = undefined;
+      if (this.firstDescent && drone.pos.y < 5000) {
+        console.error("-tangents strat");
 
-        const distToDrone = Math.hypot(
-          boxCenter.x - drone.pos.x,
-          boxCenter.y - drone.pos.y
-        );
+        const droneLayer = Math.floor(drone.pos.y / 2500);
+        const mostExteriorBoxFromNextLayer = Object.values(this.fishes)
+          .map((fish) => {
+            return {
+              boxPos: { x: fish.box.pos.x, y: fish.box.pos.y },
+              boxSize: { x: fish.box.size.x, y: fish.box.size.y },
+              valid: true,
+              type: fish.detail.type,
+              fishId: fish.id,
+            };
+          })
+          .reduce(
+            (acc, current) => {
+              if (droneLayer !== current.type || drone.scans.includes(current.fishId) || secondDrone.scans.includes(current.fishId)) {
+                return acc;
+              }
 
-        if (this.now || (drone.shouldAscend && boxCenter.y <= drone.pos.y)) {
-          continue;
-        }
+              const leftBoundary =
+                Math.sign(current.boxSize.x) !== -1
+                  ? current.boxPos.x
+                  : current.boxPos.x + current.boxSize.x;
+              const rightBoundary =
+                leftBoundary !== current.boxPos.x
+                  ? current.boxPos.x
+                  : current.boxPos.x + current.boxSize.x;
 
-        if (drone.shouldStayAbove) {
-          const theoreticalNextPos = computeBestNextPos(
-            drone,
-            this.fishes,
-            boxCenter
+              console.error("consider box:", {
+                fishId: current.fishId,
+                leftBoundary,
+                rightBoundary,
+              });
+              if (
+                (drone.pos.x < secondDrone.pos.x &&
+                  (!acc.valid || leftBoundary < acc.box.pos.x)) ||
+                (drone.pos.x > secondDrone.pos.x &&
+                  (!acc.valid || rightBoundary > acc.box.pos.x))
+              ) {
+                acc.box.pos = current.boxPos;
+                acc.box.size = current.boxSize;
+                acc.valid = true;
+              }
+              return acc;
+            },
+            { box: { pos: { x: 0, y: 0 }, size: { x: 0, y: 0 } }, valid: false }
           );
 
-          const offsetY = Math.floor(theoreticalNextPos.y - drone.pos.y);
+        console.error("target box:", mostExteriorBoxFromNextLayer);
 
-          console.error("drone should ascend, is it ok to go ", { offsetY });
+        if (mostExteriorBoxFromNextLayer.valid) {
+          const leftBoundary =
+            Math.sign(mostExteriorBoxFromNextLayer.box.size.x) !== -1
+              ? mostExteriorBoxFromNextLayer.box.pos.x
+              : mostExteriorBoxFromNextLayer.box.pos.x +
+                mostExteriorBoxFromNextLayer.box.size.x;
+          const rightBoundary =
+            leftBoundary !== mostExteriorBoxFromNextLayer.box.pos.x
+              ? mostExteriorBoxFromNextLayer.box.pos.x
+              : mostExteriorBoxFromNextLayer.box.pos.x +
+                mostExteriorBoxFromNextLayer.box.size.x;
 
-          const moveImpact = this.diffstimate(drone, offsetY, -600);
-
-          console.error("answer is ", { moveImpact });
-
-          // consider the impact of getting a new fish or removing point from enemy potential
-          if (moveImpact < 0) {
-            // console.error(fish.id, ":makes me lose points");
-            continue;
-          }
-        }
-
-        if (distToDrone < shortestDist) {
-          console.error("+", { id: fish.id, box: fish.box, distToDrone });
-          shortestDist = distToDrone;
-          closestBoxCenter = {
-            pos: { x: boxCenter.x, y: boxCenter.y },
+          bestBet = {
+            pos: {
+              x:
+                drone.pos.x < secondDrone.pos.x && leftBoundary !== 0
+                  ? leftBoundary
+                  : drone.pos.x > secondDrone.pos.x &&
+                    rightBoundary === MAP_SIZE -1
+                  ? leftBoundary
+                  : rightBoundary,
+              y:
+                mostExteriorBoxFromNextLayer.box.pos.y +
+                mostExteriorBoxFromNextLayer.box.size.y / 2,
+            },
             unseen: 1,
           };
+
+          if (bestBet.pos.x === 0 && bestBet.pos.y === 0) {
+            bestBet = undefined;
+          }
+          console.error("bestBet:", bestBet);
         }
       }
 
-      if (closestBoxCenter) {
-        drone.checkPoints = [closestBoxCenter];
+      if (bestBet === undefined) {
+        // TODO: handle too close centers
+        let closestBoxCenter: Checkpoint | undefined = undefined;
+        let shortestDist: number = Infinity;
+        for (const fish of Object.values(this.fishes)) {
+          if (fish.detail.type === -1) {
+            //   console.error(fish.id, ":dont chase monster");
+            continue;
+          } else if (fish.lastBlipTurn !== this.turn) {
+            //   console.error(fish.id, ":not in map anymore");
+            continue;
+          } else if (this.myScans.includes(fish.id)) {
+            //   console.error(fish.id, ":already saved champ");
+            continue;
+          } else if (
+            drone.scans.includes(fish.id) ||
+            secondDrone?.scans.includes(fish.id)
+          ) {
+            //   console.error(fish.id, ":got that one");
+            continue;
+          } else if (this.firstDescent && fish.detail.type !== 2) {
+            //   console.error(fish.id, ":not a priority");
+            continue;
+          }
+
+          const boxCenter = {
+            x: fish.box.pos.x + fish.box.size.x / 2,
+            y: fish.box.pos.y + fish.box.size.y / 2,
+          };
+
+          const distToDrone = Math.hypot(
+            boxCenter.x - drone.pos.x,
+            boxCenter.y - drone.pos.y
+          );
+
+          if (this.now || (drone.shouldAscend && boxCenter.y <= drone.pos.y)) {
+            continue;
+          }
+
+          if (drone.shouldStayAbove) {
+            const theoreticalNextPos = computeBestNextPos(
+              drone,
+              this.fishes,
+              boxCenter
+            );
+
+            const offsetY = Math.floor(theoreticalNextPos.y - drone.pos.y);
+
+            console.error("drone should ascend, is it ok to go ", { offsetY });
+
+            const moveImpact = this.diffstimate(drone, offsetY, -600);
+
+            console.error("answer is ", { moveImpact });
+
+            // consider the impact of getting a new fish or removing point from enemy potential
+            if (moveImpact < 0) {
+              // console.error(fish.id, ":makes me lose points");
+              continue;
+            }
+          }
+
+          if (distToDrone < shortestDist) {
+            console.error("+", { id: fish.id, box: fish.box, distToDrone });
+            shortestDist = distToDrone;
+            closestBoxCenter = {
+              pos: { x: boxCenter.x, y: boxCenter.y },
+              unseen: 1,
+            };
+          }
+        }
+        bestBet = closestBoxCenter;
+      }
+
+      if (bestBet !== undefined) {
+        drone.checkPoints = [bestBet];
       } else {
         drone.checkPoints = [{ pos: { x: drone.pos.x, y: 0 }, unseen: 1 }];
       }

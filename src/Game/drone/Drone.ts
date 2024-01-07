@@ -113,7 +113,7 @@ export class Drone {
 
         // TODO: find a condition to light depending on monster info
         if (fish.detail.type === 0) {
-          if (distToCorner < 2000) {
+          if (distToCorner < 2400) {
             // console.error("close enough:", {
             //   id: this.droneId,
             //   fishId: fish.id,
@@ -124,7 +124,7 @@ export class Drone {
           }
         } else if (fish.detail.type === 1) {
           if (
-            distToCorner < 2600 &&
+            distToCorner < 3000 &&
             (!game.firstDescent || this.battery >= 25)
           ) {
             // console.error("close enough:", {

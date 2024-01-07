@@ -1,8 +1,4 @@
-import {
-  DRONE_MAX_MOVE_DIST,
-  drone.safetyRadius,
-  STEP_RATIO,
-} from "../Game.constants";
+import { DRONE_MAX_MOVE_DIST, STEP_RATIO } from "../Game.constants";
 import { FishId, Vector } from "../Game.types";
 import { Drone } from "../drone/Drone";
 import { Fish } from "../fish/Fish";
@@ -17,7 +13,7 @@ function normalizedAngleFromPos(dest: Vector, pos: Vector): number {
   return normalizedAngle(angle);
 }
 
-function closestToTarget(
+export function closestToTarget(
   target: Vector,
   moves: Vector[],
   drone: Drone
@@ -68,9 +64,14 @@ function circleIntersections(
     droneMovement.center.y - safetyLimit.center.y
   );
 
-  if (distBetweenCenters < Math.abs(droneMovement.radius - safetyLimit.radius)) {
+  if (
+    distBetweenCenters < Math.abs(droneMovement.radius - safetyLimit.radius)
+  ) {
     // console.error()
-    return (circleIntersections(droneMovement, {center: safetyLimit.center, radius: safetyLimit.radius - 1}))
+    return circleIntersections(droneMovement, {
+      center: safetyLimit.center,
+      radius: safetyLimit.radius - 1,
+    });
   }
   const distanceToLineOfIntersection =
     (Math.pow(droneMovement.radius, 2) -
@@ -120,7 +121,7 @@ function rotateSafePos(
   positionToRotate: Vector, // direction to overwrite in safePositions
   drone: Drone
 ): Vector | null {
-    // console.error("rotation----->", positionToRotate);
+  // console.error("rotation----->", positionToRotate);
   // build an array of all the potential directions
   const angles: { angle: number; position: Vector }[] = safePositions
     .map((pos) => {
@@ -158,13 +159,16 @@ function rotateSafePos(
   });
 
   let i = 0,
-  clockwise = false;
-  while (angles[i].position.x !== positionToRotate.x || angles[i].position.y !== positionToRotate.y) {
+    clockwise = false;
+  while (
+    angles[i].position.x !== positionToRotate.x ||
+    angles[i].position.y !== positionToRotate.y
+  ) {
     // console.error(i, positionToRotate, angles[i].position)
 
     // if I see the other safe position, it mean this position is the first clockwise
     if (safePositions.includes(angles[i].position)) {
-        // console.error('clockwise------------------')
+      // console.error('clockwise------------------')
       clockwise = true;
     }
     i++;
@@ -179,7 +183,10 @@ function rotateSafePos(
   if (safePositions.includes(angles[i].position)) {
     return null;
   }
-  if (safePositions[0].x === positionToRotate.x && safePositions[0].y === positionToRotate.y) {
+  if (
+    safePositions[0].x === positionToRotate.x &&
+    safePositions[0].y === positionToRotate.y
+  ) {
     // console.error(
     //   { positionToRotate },
     //   safePositions[0],
@@ -252,7 +259,7 @@ function updateToSafePosForMonster(
   // console.error("---------Recursion|", currentlyCheckingPosition, ratio)
 
   // move monster for the step
-  monster.guesstimateMove({ratio});
+  monster.guesstimateMove({ ratio });
 
   //   console.error(monster);
   // if the ratio is over 1, we have checked for the max distance possible for the drone
@@ -272,25 +279,24 @@ function updateToSafePosForMonster(
     );
   }
 
-//   console.error("---------|");
-//   console.error(
-//     "drone ",
-//     drone.droneId,
-//     "|",
-//     monster.id,
-//     " !dangerous move: ",
-//     safePositions,
-//     { first: initialGuessPosition },
-//     { current: currentlyCheckingPosition },
-//     ratio
-//   );
+  //   console.error("---------|");
+  //   console.error(
+  //     "drone ",
+  //     drone.droneId,
+  //     "|",
+  //     monster.id,
+  //     " !dangerous move: ",
+  //     safePositions,
+  //     { first: initialGuessPosition },
+  //     { current: currentlyCheckingPosition },
+  //     ratio
+  //   );
   // otherwise, compute pos at the intersections of the safety range and the travelled distance
   const safeIntersections: Vector[] = circleIntersections(
     { center: drone.pos, radius: DRONE_MAX_MOVE_DIST * ratio },
-    { center: monster.guesstimatedNextPos, radius: drone.safetyRadius
- + 10 }
+    { center: monster.guesstimatedNextPos, radius: drone.safetyRadius + 10 }
   );
-    // console.error("--",  safeIntersections );
+  // console.error("--",  safeIntersections );
 
   if (safePositions.length === 0) {
     safeIntersections.forEach((point) => {
@@ -449,7 +455,7 @@ function recursiveCheckThrough(
     );
   }
 
-//   console.error("|||||||||", safePositions);
+  //   console.error("|||||||||", safePositions);
   return safePositions;
 }
 
@@ -459,14 +465,14 @@ export function computeBestNextPos(
   fishes: Record<FishId, Fish>,
   target: Vector
 ): Vector {
-//   console.error("\n\n Computation\n", {
-//     droneId: drone.droneId,
-//     // dronePos: drone.pos,
-//     // target,
-//   });
+  //   console.error("\n\n Computation\n", {
+  //     droneId: drone.droneId,
+  //     // dronePos: drone.pos,
+  //     // target,
+  //   });
 
   if (drone.pos.x === target.x && drone.pos.y === target.y) {
-    return (closestToTarget({ x: 0, y: 0 }, [], drone))
+    return closestToTarget({ x: 0, y: 0 }, [], drone);
   }
   const safePositions: Vector[] = [];
 
@@ -503,14 +509,14 @@ export function computeBestNextPos(
     console.error("damn, null??");
     return closestToTarget({ x: 0, y: 0 }, [], drone);
   }
-//   console.error("-before checking closest to target: ", { safePositions });
+  //   console.error("-before checking closest to target: ", { safePositions });
 
   if (safePositions.length === 0) {
     safePositions.push(initialGuessPosition);
   }
 
-//   console.error("before checking closest to target: ", { safePositions });
-//   console.error("Compute ends\n\n");
+  //   console.error("before checking closest to target: ", { safePositions });
+  //   console.error("Compute ends\n\n");
 
   // TODO: redo calculation for immediate next turn to see which one end up closer
   // TODO: guesstimate and move monsters to do next turn calc
