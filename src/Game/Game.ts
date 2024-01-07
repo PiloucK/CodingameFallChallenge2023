@@ -181,33 +181,6 @@ export class Game implements GameData {
             (firstDrone.blips[i].fishId % 2 === 0 ? 1 : -1)
       );
 
-      // if (mirroryBlipIndex !== -1 &&
-      //   Math.sign(firstDrone.pos.x - 5000) !==
-      //     Math.sign(secondDrone.pos.x - 5000)) {
-
-      //       const mirroryFish =
-      //       this.fishes[firstDrone.blips[mirroryBlipIndex].fishId];
-
-      //     if (mirroryFish.lastSeenTurn! >= this.turn - 1 && mirroryFish.id !== -1) {
-      //       // mirroryFish.guesstimateMove({ postBoundCheck: false });
-      //       fish.box = {
-      //         pos: {
-      //           x: get1DMirror(mirroryFish.box.pos.x, 5000),
-      //           y: mirroryFish.box.pos.y,
-      //         },
-      //         size: { x: 0, y: 0 },
-      //       };
-
-      //       console.error("mirrored exact pos:", {
-      //         id: fish.id,
-      //         mirror: mirroryFish.id,
-      //         box: fish.box,
-      //       });
-      //       continue;
-      //     }
-
-      // }
-
       const getMirroryXBlips = () => {
         if (
           mirroryBlipIndex === -1 ||
@@ -316,9 +289,60 @@ export class Game implements GameData {
       };
     }
 
-    // for (const fish of Object.values(this.fishes)) {
-    //   console.error({ id: fish.id, box: fish.box });
-    // }
+    if (
+      Math.sign(firstDrone.pos.x - 5000) !== Math.sign(secondDrone.pos.x - 5000)
+    ) {
+      for (const fish of Object.values(this.fishes)) {
+        if (fish.lastBlipTurn !== this.turn) {
+          continue;
+        }
+        if (fish.detail.type === -1) {
+          continue;
+        }
+        if (fish.id % 2 !== 0) {
+          continue;
+        }
+        if (this.fishes[fish.id + 1].lastBlipTurn !== this.turn) {
+          continue;
+        }
+        const mirroredFish = this.fishes[fish.id + 1];
+
+        console.error("reduce boxes:", {
+          id: fish.id,
+          box: fish.box,
+          mirrorId: mirroredFish.id,
+          mirroredBox: mirroredFish.box,
+        });
+
+        if (Math.abs(fish.box.size.x) > Math.abs(mirroredFish.box.size.x)) {
+          fish.box.pos.x = get1DMirror(mirroredFish.box.pos.x, MAP_SIZE / 2);
+          fish.box.size.x = -mirroredFish.box.size.x;
+        } else if (
+          Math.abs(fish.box.size.x) < Math.abs(mirroredFish.box.size.x)
+        ) {
+          mirroredFish.box.pos.x = get1DMirror(fish.box.pos.x, MAP_SIZE / 2);
+          mirroredFish.box.size.x = -fish.box.size.x;
+        }
+
+        if (
+          fish.box.pos.x === mirroredFish.box.pos.x &&
+          fish.box.size.x === mirroredFish.box.size.x
+        ) {
+            fish.box.size.x = fish.box.pos.x + fish.box.size.x - 5000
+            mirroredFish.box.pos.x = 5000
+            mirroredFish.box.size.x = fish.box.size.x
+        }
+        // if (fish.box.size.y > mirroredFish.box.size.y) {
+        //     ;
+        // } else if (fish.box.size.y < mirroredFish.box.size.y) {
+        //     ;
+        // }
+      }
+    }
+
+    for (const fish of Object.values(this.fishes)) {
+      console.error({ id: fish.id, box: fish.box });
+    }
   }
 
   scorestimate() {
@@ -693,7 +717,11 @@ export class Game implements GameData {
           })
           .reduce(
             (acc, current) => {
-              if (droneLayer !== current.type || drone.scans.includes(current.fishId) || secondDrone.scans.includes(current.fishId)) {
+              if (
+                droneLayer !== current.type ||
+                drone.scans.includes(current.fishId) ||
+                secondDrone.scans.includes(current.fishId)
+              ) {
                 return acc;
               }
 
@@ -746,7 +774,7 @@ export class Game implements GameData {
                 drone.pos.x < secondDrone.pos.x && leftBoundary !== 0
                   ? leftBoundary
                   : drone.pos.x > secondDrone.pos.x &&
-                    rightBoundary === MAP_SIZE -1
+                    rightBoundary === MAP_SIZE - 1
                   ? leftBoundary
                   : rightBoundary,
               y:
